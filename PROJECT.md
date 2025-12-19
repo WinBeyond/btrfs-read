@@ -45,12 +45,13 @@ btrfs_read/
 │   ├── final_test.sh          # 综合测试
 │   └── verify_setup.sh        # 设置验证
 │
-├── diagrams/                   # PlantUML 架构图
-│   ├── architecture.puml      # 总体架构
-│   ├── address-mapping.puml   # 地址映射流程
-│   ├── btree-search.puml      # B-Tree 搜索
-│   ├── file-read-flow.puml    # 文件读取流程
-│   └── init-flow.puml         # 初始化流程
+├── diagrams/                   # 架构图 (Mermaid 格式)
+│   ├── README.md              # 图表说明文档
+│   ├── architecture.md        # 总体架构
+│   ├── address-mapping.md     # 地址映射流程
+│   ├── btree-search.md        # B-Tree 搜索
+│   ├── file-read-flow.md      # 文件读取流程
+│   └── init-flow.md           # 初始化流程
 │
 ├── go.mod                      # Go 模块定义
 ├── Makefile                    # 构建脚本

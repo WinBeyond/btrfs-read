@@ -89,7 +89,7 @@ btrfs_read/
 ├── tests/              # 测试文件
 ├── docs/               # 文档（8个文档 + 索引）
 ├── scripts/            # 脚本（4个脚本 + 说明）
-├── diagrams/           # 架构图（5个 PlantUML）
+├── diagrams/           # 架构图（5个 Mermaid + 说明）
 ├── go.mod              # Go 模块
 ├── Makefile            # 构建脚本
 ├── README.md           # 项目说明

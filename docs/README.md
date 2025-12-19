@@ -21,7 +21,7 @@
 ### 开发文档
 
 - **[架构设计 (ARCHITECTURE.md)](ARCHITECTURE.md)**  
-  详细的技术架构文档，包含设计理念、数据流程和 PlantUML 架构图
+  详细的技术架构文档，包含设计理念、数据流程和 Mermaid 架构图
 
 - **[测试文档 (TESTING.md)](TESTING.md)**  
   测试策略、测试用例和测试环境配置
@@ -31,6 +31,11 @@
 
 - **[多层级测试 (MULTILEVEL_TEST_RESULTS.md)](MULTILEVEL_TEST_RESULTS.md)**  
   多层级目录功能的专项测试结果
+
+### 架构图表
+
+- **[架构图 (../diagrams/)](../diagrams/)**  
+  包含系统架构、流程图等 Mermaid 格式的可视化文档
 
 ## 文档层次
 

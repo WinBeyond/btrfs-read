@@ -138,7 +138,7 @@ require (
 └─────────────────────────────────────────────────────────┘
 ```
 
-参见 PlantUML 架构图: [diagrams/architecture.puml](diagrams/architecture.puml)
+参见架构图: [diagrams/architecture.md](../diagrams/architecture.md)
 
 ---
 
@@ -208,10 +208,13 @@ btrfs-read/
 │       ├── hash.go             # 哈希函数
 │       └── binary.go           # 二进制工具
 │
-├── diagrams/                   # UML 图表
-│   ├── architecture.puml
-│   ├── init-flow.puml
-│   └── ...
+├── diagrams/                   # 架构图 (Mermaid 格式)
+│   ├── architecture.md       # 系统架构
+│   ├── init-flow.md          # 初始化流程
+│   ├── btree-search.md       # B-Tree 搜索
+│   ├── file-read-flow.md     # 文件读取流程
+│   ├── address-mapping.md    # 地址映射
+│   └── README.md             # 图表说明
 │
 └── tests/                      # 测试
     ├── unit/                   # 单元测试
