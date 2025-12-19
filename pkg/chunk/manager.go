@@ -17,56 +17,56 @@ func min(a, b int) int {
 	return b
 }
 
-// Manager Chunk 管理器（简化版：使用切片而非红黑树）
+// Manager manages chunks (simplified: uses slices instead of a red-black tree).
 type Manager struct {
 	mu       sync.RWMutex
-	mappings []*ChunkMapping // 按 LogicalStart 排序
+	mappings []*ChunkMapping // Sorted by LogicalStart.
 }
 
-// NewManager 创建管理器
+// NewManager creates a manager.
 func NewManager() *Manager {
 	return &Manager{
 		mappings: make([]*ChunkMapping, 0),
 	}
 }
 
-// AddMapping 添加 Chunk 映射
+// AddMapping adds a chunk mapping.
 func (m *Manager) AddMapping(mapping *ChunkMapping) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	m.mappings = append(m.mappings, mapping)
 
-	// 保持排序
+	// Keep sorted.
 	sort.Slice(m.mappings, func(i, j int) bool {
 		return m.mappings[i].LogicalStart < m.mappings[j].LogicalStart
 	})
 }
 
-// LogicalToPhysical 逻辑地址转物理地址
+// LogicalToPhysical maps a logical address to a physical address.
 func (m *Manager) LogicalToPhysical(logical uint64) (*PhysicalAddr, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	// 二分查找包含该逻辑地址的 chunk
+	// Binary search for the chunk containing the logical address.
 	mapping := m.findMapping(logical)
 	if mapping == nil {
 		return nil, errors.Wrap("LogicalToPhysical",
 			fmt.Errorf("no chunk mapping found for logical 0x%x", logical))
 	}
 
-	// 映射地址
+	// Map address.
 	return mapping.MapAddress(logical)
 }
 
 func (m *Manager) findMapping(logical uint64) *ChunkMapping {
-	// 二分查找
+	// Binary search.
 	idx := sort.Search(len(m.mappings), func(i int) bool {
 		return m.mappings[i].LogicalStart > logical
 	})
 
-	// idx 是第一个 start > logical 的索引
-	// 我们需要检查前一个
+	// idx is the first start > logical index.
+	// We need to check the previous entry.
 	if idx > 0 {
 		candidate := m.mappings[idx-1]
 		if candidate.Contains(logical) {
@@ -77,7 +77,7 @@ func (m *Manager) findMapping(logical uint64) *ChunkMapping {
 	return nil
 }
 
-// ParseSystemChunkArray 从 superblock 的系统 chunk 数组解析 chunk
+// ParseSystemChunkArray parses chunks from the superblock system chunk array.
 func (m *Manager) ParseSystemChunkArray(data []byte, arraySize uint32) error {
 
 	if arraySize == 0 {
@@ -87,33 +87,33 @@ func (m *Manager) ParseSystemChunkArray(data []byte, arraySize uint32) error {
 
 	offset := 0
 	for offset < int(arraySize) {
-		// 确保有足够的空间读取最小chunk（key + header + 1 stripe）
+		// Ensure enough space to read a minimal chunk (key + header + 1 stripe).
 		minChunkSize := 17 + 50 + 32 // 99 bytes
 		if offset+minChunkSize > int(arraySize) {
-			// 剩余空间不足，结束解析
+			// Not enough remaining space; stop parsing.
 			break
 		}
 
-		// 解析 key (17 bytes)
+		// Parse key (17 bytes).
 		objectID := binary.LittleEndian.Uint64(data[offset:])
 		keyType := data[offset+8]
 		keyOffset := binary.LittleEndian.Uint64(data[offset+9:])
 		offset += 17
 
-		// 检查是否是有效的 CHUNK_ITEM
-		// objectID 应该是 FIRST_CHUNK_TREE_OBJECTID (256)
-		// keyType 应该是 CHUNK_ITEM_KEY (228)
+		// Check for a valid CHUNK_ITEM.
+		// objectID should be FIRST_CHUNK_TREE_OBJECTID (256).
+		// keyType should be CHUNK_ITEM_KEY (228).
 		if objectID != 256 || keyType != 228 {
-			// 不是 chunk item，这不应该发生
+			// Not a chunk item; this should not happen.
 			return fmt.Errorf("invalid system chunk array entry: objectid=%d, type=%d", objectID, keyType)
 		}
 
-		// 确保有足够空间读取 chunk header
+		// Ensure enough space to read the chunk header.
 		if offset+50 > int(arraySize) {
 			return fmt.Errorf("chunk header exceeds array size")
 		}
 
-		// 解析 chunk item header (48 bytes)
+		// Parse chunk item header (48 bytes).
 		// struct btrfs_chunk {
 		//   __le64 length;
 		//   __le64 __unused1;
@@ -128,14 +128,14 @@ func (m *Manager) ParseSystemChunkArray(data []byte, arraySize uint32) error {
 		numStripes := binary.LittleEndian.Uint16(data[offset+44:])
 		offset += 48
 
-		// 确保有足够空间读取 stripes
+		// Ensure enough space to read stripes.
 		if offset+int(numStripes)*32 > int(arraySize) {
 			logger.Error("Stripe data exceeds array size: need %d bytes, only %d remaining (arraySize=%d, offset=%d)",
 				int(numStripes)*32, int(arraySize)-offset, arraySize, offset)
 			return fmt.Errorf("stripe data exceeds array size")
 		}
 
-		// 只支持 SINGLE/DUP 类型（简化）
+		// Only SINGLE/DUP types are supported (simplified).
 		raidBits := chunkType & 0x1F8
 		if raidBits != 0 && raidBits != (1<<5) {
 			offset += int(numStripes) * 32
@@ -146,7 +146,7 @@ func (m *Manager) ParseSystemChunkArray(data []byte, arraySize uint32) error {
 			return fmt.Errorf("invalid num_stripes: %d", numStripes)
 		}
 
-		// 读取第一个 stripe
+		// Read the first stripe.
 		devID := binary.LittleEndian.Uint64(data[offset:])
 		stripeOffset := binary.LittleEndian.Uint64(data[offset+8:])
 
@@ -165,7 +165,7 @@ func (m *Manager) ParseSystemChunkArray(data []byte, arraySize uint32) error {
 	return nil
 }
 
-// Len 返回 chunk 数量
+// Len returns the number of chunks.
 func (m *Manager) Len() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

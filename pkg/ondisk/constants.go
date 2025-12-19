@@ -1,9 +1,9 @@
 package ondisk
 
-// Btrfs 魔数
+// Btrfs magic number.
 var BtrfsMagic = [8]byte{'_', 'B', 'H', 'R', 'f', 'S', '_', 'M'}
 
-// Superblock 相关常量
+// Superblock-related constants.
 const (
 	SuperblockOffset  int64 = 0x10000      // 64KB
 	SuperblockBackup1 int64 = 0x4000000    // 64MB
@@ -14,7 +14,7 @@ const (
 	FsidSize          int   = 16
 )
 
-// B-Tree 相关常量
+// B-Tree-related constants.
 const (
 	HeaderSize        = 101
 	DefaultNodeSize   = 16384 // 16KB
@@ -22,7 +22,7 @@ const (
 	DefaultSectorSize = 4096
 )
 
-// Key 类型
+// Key types.
 const (
 	KeyTypeInodeItem       uint8 = 1
 	KeyTypeInodeRef        uint8 = 12
@@ -79,7 +79,7 @@ const (
 	LastFreeObjectid      uint64 = 0xFFFFFFFFFFFFFF00 // -256
 )
 
-// 文件类型
+// File types.
 const (
 	FtUnknown uint8 = 0
 	FtRegFile uint8 = 1
@@ -93,23 +93,23 @@ const (
 	FtMax     uint8 = 9
 )
 
-// 文件 Extent 类型
+// File extent types.
 const (
 	FileExtentInline   uint8 = 0
 	FileExtentReg      uint8 = 1
 	FileExtentPrealloc uint8 = 2
 )
 
-// 压缩类型
+// Compression types.
 const (
 	CompressNone uint8 = 0
 	CompressZlib uint8 = 1
 	CompressLZO  uint8 = 2
 	CompressZstd uint8 = 3
-	CompressLZ4  uint8 = 4 // 虽然 btrfs 内核不支持，但某些实现使用
+	CompressLZ4  uint8 = 4 // Not supported by the btrfs kernel, but used by some implementations.
 )
 
-// 校验和类型
+// Checksum types.
 const (
 	CsumTypeCRC32C uint16 = 0
 	CsumTypeXXHash uint16 = 1
@@ -117,7 +117,7 @@ const (
 	CsumTypeBlake2 uint16 = 3
 )
 
-// RAID 类型标志
+// RAID type flags.
 const (
 	BlockGroupData     uint64 = 1 << 0
 	BlockGroupSystem   uint64 = 1 << 1
@@ -132,23 +132,23 @@ const (
 	BlockGroupRaid1C4  uint64 = 1 << 10
 )
 
-// Inode 标志
+// Inode flags.
 const (
-	InodeNodatasum  uint64 = 1 << 0  // 不计算数据校验和
-	InodeNodatacow  uint64 = 1 << 1  // 不使用 COW
-	InodeReadonly   uint64 = 1 << 2  // 只读
-	InodeNocompress uint64 = 1 << 3  // 不压缩
-	InodePrealloc   uint64 = 1 << 4  // 预分配
-	InodeSync       uint64 = 1 << 5  // 同步写入
-	InodeImmutable  uint64 = 1 << 6  // 不可修改
-	InodeAppend     uint64 = 1 << 7  // 仅追加
-	InodeNodump     uint64 = 1 << 8  // 不备份
-	InodeNoatime    uint64 = 1 << 9  // 不更新访问时间
-	InodeDirsync    uint64 = 1 << 10 // 目录同步
-	InodeCompress   uint64 = 1 << 11 // 压缩
+	InodeNodatasum  uint64 = 1 << 0  // Do not calculate data checksums.
+	InodeNodatacow  uint64 = 1 << 1  // Do not use COW.
+	InodeReadonly   uint64 = 1 << 2  // Read-only.
+	InodeNocompress uint64 = 1 << 3  // Do not compress.
+	InodePrealloc   uint64 = 1 << 4  // Preallocate.
+	InodeSync       uint64 = 1 << 5  // Synchronous writes.
+	InodeImmutable  uint64 = 1 << 6  // Immutable.
+	InodeAppend     uint64 = 1 << 7  // Append-only.
+	InodeNodump     uint64 = 1 << 8  // Exclude from dumps.
+	InodeNoatime    uint64 = 1 << 9  // Do not update access time.
+	InodeDirsync    uint64 = 1 << 10 // Directory sync.
+	InodeCompress   uint64 = 1 << 11 // Compress.
 )
 
-// Root 标志
+// Root flags.
 const (
-	RootSubvolReadonly uint64 = 1 << 0 // 子卷只读
+	RootSubvolReadonly uint64 = 1 << 0 // Subvolume read-only.
 )
