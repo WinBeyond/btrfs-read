@@ -2,11 +2,46 @@
 
 ## 🚀 5 分钟快速体验
 
-本指南将帮你快速创建测试镜像并验证 Btrfs 读取功能。
+本指南将帮你快速安装并验证 Btrfs 读取功能。
 
 ---
 
-## 前置要求
+## 安装方式
+
+### 方式 1: 使用 go install (推荐)
+
+最简单的安装方式,无需克隆仓库:
+
+```bash
+# 直接从 GitHub 安装
+go install github.com/WinBeyond/btrfs-read/cmd/btrfs-read@latest
+
+# 验证安装
+btrfs-read --help
+```
+
+**前置要求**:
+- Go 1.21 或更高版本
+- `$GOPATH/bin` 需要在 PATH 中
+
+```bash
+# 添加到 PATH (如果需要)
+export PATH=$PATH:$(go env GOPATH)/bin
+
+# 或永久添加到 ~/.bashrc 或 ~/.zshrc
+echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.bashrc
+source ~/.bashrc
+```
+
+安装完成后跳到 [步骤 2: 创建测试镜像](#步骤-2-创建测试镜像)
+
+---
+
+### 方式 2: 从源码构建
+
+适合需要修改代码或贡献的开发者:
+
+#### 前置要求
 
 确保系统已安装以下工具：
 
@@ -31,18 +66,14 @@ go version          # 应该显示 Go 1.21 或更高
 mkfs.btrfs --version  # 应该显示 btrfs-progs 版本
 ```
 
----
-
-## 步骤 1: 克隆项目
+#### 步骤 1: 克隆项目
 
 ```bash
-git clone https://github.com/yourname/btrfs-read.git
+git clone https://github.com/WinBeyond/btrfs-read.git
 cd btrfs-read
 ```
 
----
-
-## 步骤 2: 下载依赖
+#### 步骤 1.5: 下载依赖
 
 ```bash
 make deps
@@ -52,10 +83,14 @@ make deps
 
 ---
 
-## 步骤 3: 创建测试镜像
+## 步骤 2: 创建测试镜像
 
 ```bash
-# 需要 root 权限
+# 克隆项目 (如果使用 go install 安装)
+git clone https://github.com/WinBeyond/btrfs-read.git
+cd btrfs-read
+
+# 创建测试镜像 (需要 root 权限)
 sudo make create-test-image
 ```
 
@@ -104,7 +139,7 @@ Running unit tests...
 --- PASS: TestSuperblockInvalidMagic (0.00s)
 ...
 PASS
-ok      github.com/yourname/btrfs-read/pkg/ondisk
+ok      github.com/WinBeyond/btrfs-read/pkg/ondisk
 ```
 
 ---
@@ -138,14 +173,23 @@ PASS
 
 ---
 
-## 步骤 6: 构建并测试 CLI 工具
+## 步骤 3: 测试 CLI 工具
+
+### 使用 go install 安装的用户
+
+```bash
+# 直接使用命令
+btrfs-read info tests/testdata/test.img
+```
+
+### 从源码构建的用户
 
 ```bash
 # 构建
 make build
 
 # 运行 CLI 工具
-./build/btrfs-read tests/testdata/test.img
+./build/btrfs-read info tests/testdata/test.img
 ```
 
 **预期输出：**
@@ -310,7 +354,7 @@ export PATH=$PATH:/usr/local/go/bin
 
 ```bash
 # 设置项目
-git clone https://github.com/yourname/btrfs-read.git
+git clone https://github.com/WinBeyond/btrfs-read.git
 cd btrfs-read
 make deps
 

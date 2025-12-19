@@ -6,8 +6,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/yourname/btrfs-read/pkg/errors"
-	"github.com/yourname/btrfs-read/pkg/logger"
+	"github.com/WinBeyond/btrfs-read/pkg/errors"
+	"github.com/WinBeyond/btrfs-read/pkg/logger"
 )
 
 func min(a, b int) int {

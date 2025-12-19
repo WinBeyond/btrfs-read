@@ -14,9 +14,32 @@
 
 ## 快速开始
 
-### 构建
+### 安装
+
+#### 方法 1: 使用 go install (推荐)
 
 ```bash
+# 直接从 GitHub 安装最新版本
+go install github.com/WinBeyond/btrfs-read/cmd/btrfs-read@latest
+
+# 验证安装
+btrfs-read --help
+```
+
+安装后，`btrfs-read` 命令将被安装到 `$GOPATH/bin` 目录（通常是 `~/go/bin`）。
+
+确保 `$GOPATH/bin` 在你的 `PATH` 中:
+```bash
+export PATH=$PATH:$(go env GOPATH)/bin
+```
+
+#### 方法 2: 从源码构建
+
+```bash
+# 克隆仓库
+git clone https://github.com/WinBeyond/btrfs-read.git
+cd btrfs-read
+
 # 使用 Makefile
 make build
 
@@ -28,22 +51,26 @@ go build -o build/btrfs-read ./cmd/btrfs-read
 
 ```bash
 # 显示帮助
-./build/btrfs-read
+btrfs-read
 
 # 显示文件系统信息
-./build/btrfs-read info <image>
+btrfs-read info <image>
 
 # 列出目录内容
-./build/btrfs-read ls <image> [path]
-./build/btrfs-read ls --json <image> /
+btrfs-read ls <image> [path]
+btrfs-read ls --json <image> /
 
 # 读取文件
-./build/btrfs-read cat <image> <path>
-./build/btrfs-read cat --json <image> /file.txt
+btrfs-read cat <image> <path>
+btrfs-read cat --json <image> /file.txt
 
 # 多层级目录支持
-./build/btrfs-read ls <image> /dir1/dir2/dir3
-./build/btrfs-read cat <image> /a/b/c/file.txt
+btrfs-read ls <image> /dir1/dir2/dir3
+btrfs-read cat <image> /a/b/c/file.txt
+
+# 日志级别
+btrfs-read ls -l debug <image> /
+btrfs-read cat --log-level warn <image> /file.txt
 ```
 
 ### 示例
@@ -53,14 +80,16 @@ go build -o build/btrfs-read ./cmd/btrfs-read
 sudo bash tests/create-test-image.sh
 
 # 列出根目录
-./build/btrfs-read ls tests/testdata/test.img /
+btrfs-read ls tests/testdata/test.img /
 
 # 读取文件
-./build/btrfs-read cat tests/testdata/test.img /hello.txt
+btrfs-read cat tests/testdata/test.img /hello.txt
 
 # JSON 输出
-./build/btrfs-read ls --json tests/testdata/test.img /
+btrfs-read ls --json tests/testdata/test.img /
 ```
+
+> **注意**: 如果使用方法 2 从源码构建，命令需要加上路径前缀 `./build/btrfs-read`
 
 ## 项目结构
 

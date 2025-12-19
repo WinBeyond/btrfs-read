@@ -15,9 +15,28 @@ btrfs_read/
 └── ...
 ```
 
-## Building the Project
+## Installation and Building
 
-### Using Make (Recommended)
+### Method 1: Using go install (Recommended)
+
+```bash
+# Install directly from GitHub
+go install github.com/WinBeyond/btrfs-read/cmd/btrfs-read@latest
+
+# Verify installation
+btrfs-read --help
+```
+
+The `btrfs-read` command will be installed to `$GOPATH/bin`.
+
+Make sure `$GOPATH/bin` is in your PATH:
+```bash
+export PATH=$PATH:$(go env GOPATH)/bin
+```
+
+### Method 2: Building from Source
+
+#### Using Make (Recommended)
 ```bash
 # Clean and build
 make clean
@@ -26,7 +45,7 @@ make build
 # The executable will be in: build/btrfs-read
 ```
 
-### Manual Build
+#### Manual Build
 ```bash
 # Create build directory
 mkdir -p build
@@ -37,7 +56,25 @@ go build -o build/btrfs-read ./cmd/btrfs-read
 
 ## Running the Executable
 
-### From Project Root
+### If installed with go install
+
+```bash
+# Show help
+btrfs-read
+
+# List directory
+btrfs-read ls tests/testdata/test.img /
+
+# Read file
+btrfs-read cat tests/testdata/test.img /hello.txt
+
+# JSON output
+btrfs-read ls --json tests/testdata/test.img /
+btrfs-read cat --json tests/testdata/test.img /hello.txt
+```
+
+### If built from source
+
 ```bash
 # Show help
 ./build/btrfs-read

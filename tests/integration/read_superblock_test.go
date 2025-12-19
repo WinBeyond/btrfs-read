@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/yourname/btrfs-read/pkg/ondisk"
+	"github.com/WinBeyond/btrfs-read/pkg/ondisk"
 )
 
 const (

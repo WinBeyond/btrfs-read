@@ -55,7 +55,7 @@
 
 ```go
 // go.mod
-module github.com/yourname/btrfs-read
+module github.com/WinBeyond/btrfs-read
 
 go 1.21
 
@@ -318,7 +318,7 @@ import (
     "encoding/binary"
     "fmt"
     
-    "github.com/yourname/btrfs-read/pkg/ondisk"
+    "github.com/WinBeyond/btrfs-read/pkg/ondisk"
 )
 
 const (
@@ -1125,10 +1125,10 @@ func (s *Searcher) binarySearchInternal(node *Node, targetKey *Key) int {
 package fs
 
 import (
-    "github.com/yourname/btrfs-read/pkg/btree"
-    "github.com/yourname/btrfs-read/pkg/chunk"
-    "github.com/yourname/btrfs-read/pkg/device"
-    "github.com/yourname/btrfs-read/pkg/ondisk"
+    "github.com/WinBeyond/btrfs-read/pkg/btree"
+    "github.com/WinBeyond/btrfs-read/pkg/chunk"
+    "github.com/WinBeyond/btrfs-read/pkg/device"
+    "github.com/WinBeyond/btrfs-read/pkg/ondisk"
 )
 
 // FileSystem Btrfs 文件系统

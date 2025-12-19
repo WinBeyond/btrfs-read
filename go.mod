@@ -1,4 +1,4 @@
-module github.com/yourname/btrfs-read
+module github.com/WinBeyond/btrfs-read
 
 go 1.21
 

@@ -103,7 +103,7 @@ package main
 
 import (
     "fmt"
-    "github.com/yourname/btrfs-read/pkg/fs"
+    "github.com/WinBeyond/btrfs-read/pkg/fs"
 )
 
 func main() {

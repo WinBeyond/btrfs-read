@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/yourname/btrfs-read/pkg/errors"
-	"github.com/yourname/btrfs-read/pkg/ondisk"
+	"github.com/WinBeyond/btrfs-read/pkg/errors"
+	"github.com/WinBeyond/btrfs-read/pkg/ondisk"
 )
 
 const (

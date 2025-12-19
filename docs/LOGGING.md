@@ -188,7 +188,7 @@ logger.Error("Stripe data exceeds array size: need %d bytes, only %d remaining",
 在代码中使用日志:
 
 ```go
-import "github.com/yourname/btrfs-read/pkg/logger"
+import "github.com/WinBeyond/btrfs-read/pkg/logger"
 
 // Debug 日志
 logger.Debug("Variable value: %v", value)
