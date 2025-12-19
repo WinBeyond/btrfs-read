@@ -342,4 +342,4 @@ make clean
 
 **祝你开发顺利！** 🎉
 
-如有问题，请查看 [TESTING.md](tests/TESTING.md) 或提交 Issue。
+如有问题，请查看 [TESTING.md](TESTING.md) 或提交 Issue。

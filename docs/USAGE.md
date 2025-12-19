@@ -150,6 +150,6 @@ func main() {
 
 ## 更多信息
 
-- 查看 `COMPLETION_SUMMARY.md` 了解实现细节
-- 查看 `ARCHITECTURE.md` 了解系统架构
+- 查看 [ARCHITECTURE.md](ARCHITECTURE.md) 了解系统架构
+- 查看 [TESTING.md](TESTING.md) 了解测试方法
 - 参考源码中的注释了解具体实现
