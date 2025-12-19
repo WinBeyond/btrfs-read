@@ -7,14 +7,14 @@ import (
 )
 
 func TestSuperblockUnmarshal(t *testing.T) {
-	// 创建一个最小的有效 superblock
+	// Create a minimal valid superblock.
 	buf := make([]byte, SuperblockSize)
 
-	// 魔数在偏移 64 (Checksum:32 + FSID:16 + Bytenr:8 + Flags:8)
+	// Magic is at offset 64 (Checksum:32 + FSID:16 + Bytenr:8 + Flags:8).
 	offset := 32 + 16 + 8 + 8
 	copy(buf[offset:offset+8], BtrfsMagic[:])
 
-	// 解析
+	// Parse.
 	sb := &Superblock{}
 	err := sb.Unmarshal(buf)
 
@@ -22,12 +22,12 @@ func TestSuperblockUnmarshal(t *testing.T) {
 		t.Fatalf("Unmarshal failed: %v", err)
 	}
 
-	// 验证魔数
+	// Validate magic.
 	if !bytes.Equal(sb.Magic[:], BtrfsMagic[:]) {
 		t.Errorf("Magic mismatch: got %v, want %v", sb.Magic, BtrfsMagic)
 	}
 
-	// 验证 IsValid
+	// Validate IsValid.
 	if !sb.IsValid() {
 		t.Error("IsValid() returned false for valid superblock")
 	}
@@ -36,7 +36,7 @@ func TestSuperblockUnmarshal(t *testing.T) {
 func TestSuperblockInvalidMagic(t *testing.T) {
 	buf := make([]byte, SuperblockSize)
 
-	// 设置错误的魔数（在正确的偏移位置）
+	// Set an invalid magic value (at the correct offset).
 	offset := 32 + 16 + 8 + 8
 	copy(buf[offset:offset+8], []byte("_INVALID"))
 
@@ -49,7 +49,7 @@ func TestSuperblockInvalidMagic(t *testing.T) {
 }
 
 func TestSuperblockTooShort(t *testing.T) {
-	buf := make([]byte, 100) // 太短
+	buf := make([]byte, 100) // Too short.
 
 	sb := &Superblock{}
 	err := sb.Unmarshal(buf)
@@ -62,20 +62,20 @@ func TestSuperblockTooShort(t *testing.T) {
 func TestSuperblockGetLabel(t *testing.T) {
 	sb := &Superblock{}
 
-	// 测试空标签
+	// Test empty label.
 	label := sb.GetLabel()
 	if label != "" {
 		t.Errorf("Expected empty label, got %q", label)
 	}
 
-	// 测试有效标签
+	// Test a valid label.
 	copy(sb.Label[:], []byte("TestLabel"))
 	label = sb.GetLabel()
 	if label != "TestLabel" {
 		t.Errorf("Expected 'TestLabel', got %q", label)
 	}
 
-	// 测试带 null 终止符的标签
+	// Test label with null terminator.
 	copy(sb.Label[:], []byte("Test\x00Extra"))
 	label = sb.GetLabel()
 	if label != "Test" {
@@ -86,7 +86,7 @@ func TestSuperblockGetLabel(t *testing.T) {
 func TestSuperblockFields(t *testing.T) {
 	buf := make([]byte, SuperblockSize)
 
-	// 构造一个包含各种字段的 superblock
+	// Build a superblock containing various fields.
 	w := bytes.NewBuffer(buf[:0])
 
 	// Checksum (32 bytes)
@@ -144,18 +144,18 @@ func TestSuperblockFields(t *testing.T) {
 	// StripeSize
 	binary.Write(w, binary.LittleEndian, uint32(4096))
 
-	// 填充剩余部分
+	// Fill the remaining part.
 	for w.Len() < SuperblockSize {
 		w.WriteByte(0)
 	}
 
-	// 解析
+	// Parse.
 	sb := &Superblock{}
 	if err := sb.Unmarshal(buf); err != nil {
 		t.Fatalf("Unmarshal failed: %v", err)
 	}
 
-	// 验证字段
+	// Validate fields.
 	tests := []struct {
 		name     string
 		got      interface{}

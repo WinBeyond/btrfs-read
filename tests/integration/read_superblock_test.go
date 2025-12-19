@@ -14,7 +14,7 @@ const (
 )
 
 func TestReadSuperblockFromImage(t *testing.T) {
-	// 检查测试镜像是否存在
+	// Check whether the test image exists.
 	imagePath, err := filepath.Abs(testImagePath)
 	if err != nil {
 		t.Fatalf("Failed to get absolute path: %v", err)
@@ -26,14 +26,14 @@ func TestReadSuperblockFromImage(t *testing.T) {
 
 	t.Logf("Reading test image: %s", imagePath)
 
-	// 打开镜像文件
+	// Open image file.
 	file, err := os.Open(imagePath)
 	if err != nil {
 		t.Fatalf("Failed to open image: %v", err)
 	}
 	defer file.Close()
 
-	// 读取 Superblock
+	// Read superblock.
 	buf := make([]byte, ondisk.SuperblockSize)
 	n, err := file.ReadAt(buf, superblockOffset)
 	if err != nil {
@@ -43,18 +43,18 @@ func TestReadSuperblockFromImage(t *testing.T) {
 		t.Fatalf("Read %d bytes, expected %d", n, ondisk.SuperblockSize)
 	}
 
-	// 解析 Superblock
+	// Parse superblock.
 	sb := &ondisk.Superblock{}
 	if err := sb.Unmarshal(buf); err != nil {
 		t.Fatalf("Failed to unmarshal superblock: %v", err)
 	}
 
-	// 验证魔数
+	// Validate magic.
 	if !sb.IsValid() {
 		t.Errorf("Invalid magic number: %v", sb.Magic)
 	}
 
-	// 验证基本字段
+	// Validate basic fields.
 	t.Run("BasicFields", func(t *testing.T) {
 		if sb.SectorSize == 0 {
 			t.Error("SectorSize is 0")
@@ -67,17 +67,17 @@ func TestReadSuperblockFromImage(t *testing.T) {
 		}
 	})
 
-	// 验证标签
+	// Validate label.
 	t.Run("Label", func(t *testing.T) {
 		label := sb.GetLabel()
 		t.Logf("Label: %s", label)
-		// 测试脚本设置的标签是 "TestBtrfs"
+		// The test script sets the label to "TestBtrfs".
 		if label != "TestBtrfs" {
 			t.Logf("Warning: Expected label 'TestBtrfs', got '%s'", label)
 		}
 	})
 
-	// 验证树根地址
+	// Validate tree root addresses.
 	t.Run("TreeRoots", func(t *testing.T) {
 		if sb.Root == 0 {
 			t.Error("Root tree address is 0")
@@ -89,7 +89,7 @@ func TestReadSuperblockFromImage(t *testing.T) {
 		t.Logf("Chunk root: 0x%x", sb.ChunkRoot)
 	})
 
-	// 验证设备信息
+	// Validate device info.
 	t.Run("DeviceInfo", func(t *testing.T) {
 		if sb.NumDevices == 0 {
 			t.Error("NumDevices is 0")
@@ -101,7 +101,7 @@ func TestReadSuperblockFromImage(t *testing.T) {
 		t.Logf("Device total: %d bytes", sb.DevItem.TotalBytes)
 	})
 
-	// 打印完整信息（仅在 verbose 模式）
+	// Print full info (verbose mode only).
 	if testing.Verbose() {
 		printSuperblockInfo(t, sb)
 	}
@@ -123,21 +123,21 @@ func TestReadBackupSuperblock(t *testing.T) {
 	}
 	defer file.Close()
 
-	// 获取文件大小
+	// Get file size.
 	stat, err := file.Stat()
 	if err != nil {
 		t.Fatalf("Failed to stat file: %v", err)
 	}
 	fileSize := stat.Size()
 
-	// 备份 superblock 位置
+	// Backup superblock offsets.
 	backupOffsets := []struct {
 		name   string
 		offset int64
 	}{
 		{"Primary", 0x10000},
 		{"Backup1", 0x4000000},    // 64MB
-		{"Backup2", 0x4000000000}, // 256GB (可能超出文件大小)
+		{"Backup2", 0x4000000000}, // 256GB (may be beyond file size)
 	}
 
 	for _, backup := range backupOffsets {
@@ -196,7 +196,7 @@ func BenchmarkReadSuperblock(b *testing.B) {
 	}
 }
 
-// 辅助函数：打印 Superblock 详细信息
+// Helper: print superblock details.
 func printSuperblockInfo(t *testing.T, sb *ondisk.Superblock) {
 	t.Logf("\n=== Superblock Information ===")
 	t.Logf("Magic:         %s", string(sb.Magic[:]))

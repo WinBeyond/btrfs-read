@@ -1,74 +1,74 @@
 .PHONY: build test clean install fmt vet lint
 
-# 项目配置
+# Project configuration
 BINARY_NAME=btrfs-read
 GO=go
 GOFLAGS=-v
 
-# 构建目录
+# Build directory
 BUILD_DIR=build
 
-# 默认目标
+# Default target
 all: build
 
-# 构建 CLI 工具
+# Build CLI tool
 build: fmt vet
 	@echo "Building CLI tool..."
 	$(GO) build $(GOFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/btrfs-read
 
-# 运行测试
+# Run tests
 test:
 	@echo "Running tests..."
 	$(GO) test -v -race -coverprofile=coverage.out ./...
 
-# 运行基准测试
+# Run benchmarks
 bench:
 	@echo "Running benchmarks..."
 	$(GO) test -bench=. -benchmem ./...
 
-# 代码覆盖率
+# Code coverage
 coverage: test
 	@echo "Generating coverage report..."
 	$(GO) tool cover -html=coverage.out -o coverage.html
 
-# 格式化代码
+# Format code
 fmt:
 	@echo "Formatting code..."
 	$(GO) fmt ./...
 
-# 静态检查
+# Static checks
 vet:
 	@echo "Running go vet..."
 	$(GO) vet ./...
 
-# Lint (需要安装 golangci-lint)
+# Lint (requires golangci-lint)
 lint:
 	@echo "Running linter..."
 	golangci-lint run ./...
 
-# 清理
+# Clean
 clean:
 	@echo "Cleaning..."
 	rm -rf $(BUILD_DIR)
 	rm -f coverage.out coverage.html
 
-# 安装依赖
+# Install dependencies
 deps:
 	@echo "Downloading dependencies..."
 	$(GO) mod download
 	$(GO) mod tidy
 
-# 安装工具
+# Install binaries
 install: build
 	@echo "Installing..."
 	$(GO) install ./cmd/btrfs-read
 
-# 运行示例
+# Run example
 run-example: build
 	@echo "Running example..."
 	./$(BUILD_DIR)/$(BINARY_NAME) --help
 
-# 创建测试镜像
+# Create test image
 create-test-image:
 	@echo "Creating test image (requires root)..."
 	@if [ ! -f tests/create-test-image.sh ]; then \
@@ -78,7 +78,7 @@ create-test-image:
 	@chmod +x tests/create-test-image.sh
 	sudo ./tests/create-test-image.sh
 
-# 运行集成测试
+# Run integration tests
 test-integration:
 	@echo "Running integration tests..."
 	@if [ ! -f tests/testdata/test.img ]; then \
@@ -87,7 +87,7 @@ test-integration:
 	fi
 	$(GO) test -v ./tests/integration/... -coverprofile=coverage-integration.out
 
-# 测试 CLI 工具
+# Test CLI tool
 test-cli: build
 	@echo "Testing CLI tool with test image..."
 	@if [ ! -f tests/testdata/test.img ]; then \
@@ -96,7 +96,7 @@ test-cli: build
 	fi
 	./$(BUILD_DIR)/$(BINARY_NAME) ls tests/testdata/test.img /
 
-# 帮助
+# Help
 help:
 	@echo "Available targets:"
 	@echo "  build              - Build CLI tool"

@@ -29,7 +29,7 @@ func TestReadFileBasic(t *testing.T) {
 	}
 	defer filesystem.Close()
 
-	// 尝试读取文件
+	// Try reading a file.
 	data, err := filesystem.ReadFile("/hello.txt")
 	if err != nil {
 		t.Logf("Expected error (chunk tree not fully loaded): %v", err)

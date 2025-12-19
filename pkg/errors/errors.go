@@ -5,32 +5,32 @@ import (
 	"fmt"
 )
 
-// 预定义错误
+// Predefined errors.
 var (
-	// 设备相关错误
+	// Device-related errors.
 	ErrDeviceNotFound    = errors.New("device not found")
 	ErrDeviceReadFailed  = errors.New("device read failed")
 	ErrInvalidDeviceSize = errors.New("invalid device size")
 
-	// Superblock 相关错误
+	// Superblock-related errors.
 	ErrInvalidMagic       = errors.New("invalid magic number")
 	ErrInvalidChecksum    = errors.New("invalid checksum")
 	ErrNoValidSuperblock  = errors.New("no valid superblock found")
 	ErrSuperblockTooSmall = errors.New("superblock data too small")
 
-	// Chunk 相关错误
+	// Chunk-related errors.
 	ErrChunkNotFound       = errors.New("chunk mapping not found")
 	ErrInvalidChunkMapping = errors.New("invalid chunk mapping")
 	ErrUnsupportedRaidType = errors.New("unsupported RAID type")
 
-	// B-Tree 相关错误
+	// B-Tree-related errors.
 	ErrNodeNotFound = errors.New("node not found")
 	ErrInvalidNode  = errors.New("invalid node data")
 	ErrKeyNotFound  = errors.New("key not found")
 	ErrInvalidPath  = errors.New("invalid btree path")
 	ErrNodeTooSmall = errors.New("node data too small")
 
-	// 文件系统相关错误
+	// Filesystem-related errors.
 	ErrPathNotFound    = errors.New("path not found")
 	ErrNotDirectory    = errors.New("not a directory")
 	ErrNotRegularFile  = errors.New("not a regular file")
@@ -38,18 +38,18 @@ var (
 	ErrInvalidFilePath = errors.New("invalid file path")
 	ErrExtentNotFound  = errors.New("extent not found")
 
-	// 压缩相关错误
+	// Compression-related errors.
 	ErrUnsupportedCompression = errors.New("unsupported compression type")
 	ErrDecompressionFailed    = errors.New("decompression failed")
 
-	// 缓存相关错误
+	// Cache-related errors.
 	ErrCacheMiss = errors.New("cache miss")
 )
 
-// BtrfsError Btrfs 错误包装
+// BtrfsError wraps a Btrfs error.
 type BtrfsError struct {
-	Op  string // 操作名称
-	Err error  // 原始错误
+	Op  string // Operation name.
+	Err error  // Original error.
 }
 
 func (e *BtrfsError) Error() string {
@@ -63,7 +63,7 @@ func (e *BtrfsError) Unwrap() error {
 	return e.Err
 }
 
-// Wrap 包装错误
+// Wrap wraps an error.
 func Wrap(op string, err error) error {
 	if err == nil {
 		return nil
@@ -74,12 +74,12 @@ func Wrap(op string, err error) error {
 	}
 }
 
-// Is 检查错误类型
+// Is checks the error type.
 func Is(err, target error) bool {
 	return errors.Is(err, target)
 }
 
-// As 转换错误类型
+// As converts the error type.
 func As(err error, target interface{}) bool {
 	return errors.As(err, target)
 }

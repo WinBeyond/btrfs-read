@@ -16,8 +16,8 @@ type Key struct {
 	Offset   uint64
 }
 
-// Compare 比较两个 Key
-// 返回: -1 (this < other), 0 (==), 1 (this > other)
+// Compare compares two keys.
+// Returns: -1 (this < other), 0 (==), 1 (this > other).
 func (k *Key) Compare(other *Key) int {
 	if k.ObjectID < other.ObjectID {
 		return -1
@@ -40,7 +40,7 @@ func (k *Key) Compare(other *Key) int {
 	return 0
 }
 
-// Header B-Tree 节点头
+// Header represents a B-Tree node header.
 type Header struct {
 	Checksum   [32]byte
 	FSID       [16]byte
@@ -53,28 +53,28 @@ type Header struct {
 	Level      uint8
 }
 
-// IsLeaf 是否是叶节点
+// IsLeaf reports whether this is a leaf node.
 func (h *Header) IsLeaf() bool {
 	return h.Level == 0
 }
 
-// Node B-Tree 节点
+// Node represents a B-Tree node.
 type Node struct {
 	Header *Header
-	Keys   []*Key   // 内部节点: keys
-	Ptrs   []uint64 // 内部节点: 子节点指针
-	Items  []*Item  // 叶节点: items
+	Keys   []*Key   // Internal node: keys.
+	Ptrs   []uint64 // Internal node: child pointers.
+	Items  []*Item  // Leaf node: items.
 }
 
-// Item 叶节点中的 item
+// Item represents an item in a leaf node.
 type Item struct {
 	Key    *Key
-	Offset uint32 // 数据在节点中的偏移
-	Size   uint32 // 数据大小
-	Data   []byte // 实际数据
+	Offset uint32 // Data offset within the node.
+	Size   uint32 // Data size.
+	Data   []byte // Actual data.
 }
 
-// UnmarshalHeader 解析节点头
+// UnmarshalHeader parses a node header.
 func UnmarshalHeader(data []byte) (*Header, error) {
 	if len(data) < HeaderSize {
 		return nil, fmt.Errorf("header data too short: got %d, need %d", len(data), HeaderSize)
@@ -94,13 +94,13 @@ func UnmarshalHeader(data []byte) (*Header, error) {
 	return h, nil
 }
 
-// UnmarshalNode 解析节点
+// UnmarshalNode parses a node.
 func UnmarshalNode(data []byte, nodeSize uint32) (*Node, error) {
 	if len(data) < int(nodeSize) {
 		return nil, fmt.Errorf("node data too short: got %d, need %d", len(data), nodeSize)
 	}
 
-	// 解析 header
+	// Parse header.
 	header, err := UnmarshalHeader(data[:HeaderSize])
 	if err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func unmarshalLeafNode(node *Node, data []byte, nodeSize uint32) (*Node, error) 
 
 		item := &Item{}
 
-		// 解析 key
+		// Parse key.
 		key := &Key{}
 		key.ObjectID = binary.LittleEndian.Uint64(data[offset:])
 		key.Type = data[offset+8]
@@ -133,7 +133,7 @@ func unmarshalLeafNode(node *Node, data []byte, nodeSize uint32) (*Node, error) 
 		item.Key = key
 		offset += 17
 
-		// 解析 offset 和 size
+		// Parse offset and size.
 		item.Offset = binary.LittleEndian.Uint32(data[offset:])
 		item.Size = binary.LittleEndian.Uint32(data[offset+4:])
 		offset += 8
@@ -141,7 +141,7 @@ func unmarshalLeafNode(node *Node, data []byte, nodeSize uint32) (*Node, error) 
 		node.Items[i] = item
 	}
 
-	// 读取实际数据
+	// Read actual data.
 	for _, item := range node.Items {
 		dataOffset := HeaderSize + int(item.Offset)
 		dataEnd := dataOffset + int(item.Size)
@@ -167,7 +167,7 @@ func unmarshalInternalNode(node *Node, data []byte, nodeSize uint32) (*Node, err
 			return nil, fmt.Errorf("insufficient data for key_ptr %d", i)
 		}
 
-		// 解析 key
+		// Parse key.
 		key := &Key{}
 		key.ObjectID = binary.LittleEndian.Uint64(data[offset:])
 		key.Type = data[offset+8]
@@ -175,11 +175,11 @@ func unmarshalInternalNode(node *Node, data []byte, nodeSize uint32) (*Node, err
 		node.Keys[i] = key
 		offset += 17
 
-		// 解析 block pointer
+		// Parse block pointer.
 		node.Ptrs[i] = binary.LittleEndian.Uint64(data[offset:])
 		offset += 8
 
-		// 跳过 generation
+		// Skip generation.
 		offset += 8
 	}
 

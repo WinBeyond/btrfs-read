@@ -6,64 +6,64 @@ import (
 	"fmt"
 )
 
-// Superblock Btrfs 超级块结构
+// Superblock defines the Btrfs superblock structure.
 type Superblock struct {
-	Checksum            [32]byte  // CRC32C 校验和
-	FSID                [16]byte  // 文件系统 UUID
-	Bytenr              uint64    // 物理地址
-	Flags               uint64    // 标志位
-	Magic               [8]byte   // 魔数 "_BHRfS_M"
-	Generation          uint64    // 生成号
-	Root                uint64    // Root tree 逻辑地址
-	ChunkRoot           uint64    // Chunk tree 逻辑地址
-	LogRoot             uint64    // Log tree 逻辑地址
-	LogRootTransid      uint64    // Log root 事务 ID
-	TotalBytes          uint64    // 总字节数
-	BytesUsed           uint64    // 已使用字节数
-	RootDirObjectid     uint64    // 根目录 objectid
-	NumDevices          uint64    // 设备数量
-	SectorSize          uint32    // 扇区大小
-	NodeSize            uint32    // 节点大小
-	LeafSize            uint32    // 叶节点大小 (已废弃，等于 NodeSize)
-	StripeSize          uint32    // 条带大小
-	SysChunkArraySize   uint32    // 系统 chunk 数组大小
-	ChunkRootGeneration uint64    // Chunk root 生成号
-	CompatFlags         uint64    // 兼容标志
-	CompatRoFlags       uint64    // 只读兼容标志
-	IncompatFlags       uint64    // 不兼容标志
-	CsumType            uint16    // 校验和类型
-	RootLevel           uint8     // Root tree 层级
-	ChunkRootLevel      uint8     // Chunk root 层级
-	LogRootLevel        uint8     // Log root 层级
-	DevItem             DevItem   // 设备信息
-	Label               [256]byte // 卷标签
-	CacheGeneration     uint64    // 缓存生成号
-	UUIDTreeGeneration  uint64    // UUID tree 生成号
-	MetadataUUID        [16]byte  // 元数据 UUID
+	Checksum            [32]byte  // CRC32C checksum
+	FSID                [16]byte  // Filesystem UUID
+	Bytenr              uint64    // Physical address
+	Flags               uint64    // Flags
+	Magic               [8]byte   // Magic number "_BHRfS_M"
+	Generation          uint64    // Generation
+	Root                uint64    // Root tree logical address
+	ChunkRoot           uint64    // Chunk tree logical address
+	LogRoot             uint64    // Log tree logical address
+	LogRootTransid      uint64    // Log root transaction ID
+	TotalBytes          uint64    // Total bytes
+	BytesUsed           uint64    // Bytes used
+	RootDirObjectid     uint64    // Root directory objectid
+	NumDevices          uint64    // Device count
+	SectorSize          uint32    // Sector size
+	NodeSize            uint32    // Node size
+	LeafSize            uint32    // Leaf size (deprecated; equals NodeSize)
+	StripeSize          uint32    // Stripe size
+	SysChunkArraySize   uint32    // System chunk array size
+	ChunkRootGeneration uint64    // Chunk root generation
+	CompatFlags         uint64    // Compatible flags
+	CompatRoFlags       uint64    // Read-only compatible flags
+	IncompatFlags       uint64    // Incompatible flags
+	CsumType            uint16    // Checksum type
+	RootLevel           uint8     // Root tree level
+	ChunkRootLevel      uint8     // Chunk root level
+	LogRootLevel        uint8     // Log root level
+	DevItem             DevItem   // Device info
+	Label               [256]byte // Volume label
+	CacheGeneration     uint64    // Cache generation
+	UUIDTreeGeneration  uint64    // UUID tree generation
+	MetadataUUID        [16]byte  // Metadata UUID
 
-	// 系统 chunk 数组 (嵌入的 chunk 映射)
+	// System chunk array (embedded chunk mapping)
 	SysChunkArray [2048]byte
 }
 
-// DevItem 设备项
+// DevItem represents a device item.
 type DevItem struct {
-	DevID       uint64   // 设备 ID
-	TotalBytes  uint64   // 设备总大小
-	BytesUsed   uint64   // 已使用大小
-	IOAlign     uint32   // IO 对齐
-	IOWidth     uint32   // IO 宽度
-	SectorSize  uint32   // 扇区大小
-	Type        uint64   // 设备类型
-	Generation  uint64   // 生成号
-	StartOffset uint64   // 起始偏移
-	DevGroup    uint32   // 设备组
-	SeekSpeed   uint8    // 寻道速度
-	Bandwidth   uint8    // 带宽
-	UUID        [16]byte // 设备 UUID
-	FSID        [16]byte // 文件系统 UUID
+	DevID       uint64   // Device ID
+	TotalBytes  uint64   // Total device size
+	BytesUsed   uint64   // Bytes used
+	IOAlign     uint32   // IO alignment
+	IOWidth     uint32   // IO width
+	SectorSize  uint32   // Sector size
+	Type        uint64   // Device type
+	Generation  uint64   // Generation
+	StartOffset uint64   // Start offset
+	DevGroup    uint32   // Device group
+	SeekSpeed   uint8    // Seek speed
+	Bandwidth   uint8    // Bandwidth
+	UUID        [16]byte // Device UUID
+	FSID        [16]byte // Filesystem UUID
 }
 
-// Unmarshal 从字节数组解析 Superblock
+// Unmarshal parses a Superblock from a byte slice.
 func (sb *Superblock) Unmarshal(data []byte) error {
 	if len(data) < SuperblockSize {
 		return fmt.Errorf("superblock data too short: got %d, need %d", len(data), SuperblockSize)
@@ -71,17 +71,17 @@ func (sb *Superblock) Unmarshal(data []byte) error {
 
 	r := bytes.NewReader(data)
 
-	// 读取校验和
+	// Read checksum.
 	if err := binary.Read(r, binary.LittleEndian, &sb.Checksum); err != nil {
 		return fmt.Errorf("failed to read checksum: %w", err)
 	}
 
-	// 读取 FSID
+	// Read FSID.
 	if err := binary.Read(r, binary.LittleEndian, &sb.FSID); err != nil {
 		return fmt.Errorf("failed to read FSID: %w", err)
 	}
 
-	// 读取基本字段
+	// Read basic fields.
 	if err := binary.Read(r, binary.LittleEndian, &sb.Bytenr); err != nil {
 		return err
 	}
@@ -92,12 +92,12 @@ func (sb *Superblock) Unmarshal(data []byte) error {
 		return err
 	}
 
-	// 验证魔数
+	// Validate magic number.
 	if !bytes.Equal(sb.Magic[:], BtrfsMagic[:]) {
 		return fmt.Errorf("invalid magic number: got %v, want %v", sb.Magic, BtrfsMagic)
 	}
 
-	// 读取其他字段
+	// Read remaining fields.
 	if err := binary.Read(r, binary.LittleEndian, &sb.Generation); err != nil {
 		return err
 	}
@@ -165,31 +165,31 @@ func (sb *Superblock) Unmarshal(data []byte) error {
 		return err
 	}
 
-	// 读取 DevItem
+	// Read DevItem.
 	if err := sb.DevItem.Unmarshal(data[r.Size()-int64(r.Len()):]); err != nil {
 		return fmt.Errorf("failed to read dev item: %w", err)
 	}
 
-	// 跳过已读取的 DevItem 大小
-	devItemSize := 98 // DevItem 结构体大小
+	// Skip the already read DevItem size.
+	devItemSize := 98 // DevItem struct size
 	if _, err := r.Seek(int64(devItemSize), 1); err != nil {
 		return err
 	}
 
-	// 读取 Label
+	// Read Label.
 	if err := binary.Read(r, binary.LittleEndian, &sb.Label); err != nil {
 		return err
 	}
 
-	// 从 label 后直接跳到 sys_chunk_array (offset 811)
-	// label 结束于 offset 555 (32+16+8*10+4*4+4+8*4+2+3+98+256)
-	// sys_chunk_array 开始于 offset 811
-	// 需要跳过 256 字节 (811 - 555 = 256)
+	// Jump from label directly to sys_chunk_array (offset 811).
+	// Label ends at offset 555 (32+16+8*10+4*4+4+8*4+2+3+98+256).
+	// sys_chunk_array starts at offset 811.
+	// Skip 256 bytes (811 - 555 = 256).
 	if _, err := r.Seek(256, 1); err != nil {
 		return err
 	}
 
-	// 读取系统 chunk 数组
+	// Read system chunk array.
 	if err := binary.Read(r, binary.LittleEndian, &sb.SysChunkArray); err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ func (sb *Superblock) Unmarshal(data []byte) error {
 	return nil
 }
 
-// Unmarshal 从字节数组解析 DevItem
+// Unmarshal parses a DevItem from a byte slice.
 func (di *DevItem) Unmarshal(data []byte) error {
 	r := bytes.NewReader(data)
 
@@ -247,9 +247,9 @@ func (di *DevItem) Unmarshal(data []byte) error {
 	return nil
 }
 
-// GetLabel 获取卷标签 (移除尾部的 null 字符)
+// GetLabel returns the volume label (trim trailing nulls).
 func (sb *Superblock) GetLabel() string {
-	// 查找第一个 null 字符
+	// Find the first null byte.
 	end := bytes.IndexByte(sb.Label[:], 0)
 	if end == -1 {
 		end = len(sb.Label)
@@ -257,7 +257,7 @@ func (sb *Superblock) GetLabel() string {
 	return string(sb.Label[:end])
 }
 
-// IsValid 验证 superblock 是否有效
+// IsValid validates whether the superblock is valid.
 func (sb *Superblock) IsValid() bool {
 	return bytes.Equal(sb.Magic[:], BtrfsMagic[:])
 }

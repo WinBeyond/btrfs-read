@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// LogLevel 日志级别
+// LogLevel represents a logging level.
 type LogLevel int
 
 const (
@@ -33,12 +33,12 @@ func init() {
 	errorLogger = log.New(os.Stderr, "[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
-// SetLevel 设置日志级别
+// SetLevel sets the log level.
 func SetLevel(level LogLevel) {
 	currentLevel = level
 }
 
-// SetLevelFromString 从字符串设置日志级别
+// SetLevelFromString sets the log level from a string.
 func SetLevelFromString(level string) error {
 	switch strings.ToLower(level) {
 	case "debug":
@@ -55,7 +55,7 @@ func SetLevelFromString(level string) error {
 	return nil
 }
 
-// SetOutput 设置日志输出
+// SetOutput sets the log output.
 func SetOutput(w io.Writer) {
 	debugLogger.SetOutput(w)
 	infoLogger.SetOutput(w)
@@ -63,35 +63,35 @@ func SetOutput(w io.Writer) {
 	errorLogger.SetOutput(w)
 }
 
-// Debug 输出调试日志
+// Debug outputs a debug log.
 func Debug(format string, v ...interface{}) {
 	if currentLevel <= LevelDebug {
 		debugLogger.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
-// Info 输出信息日志
+// Info outputs an info log.
 func Info(format string, v ...interface{}) {
 	if currentLevel <= LevelInfo {
 		infoLogger.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
-// Warn 输出警告日志
+// Warn outputs a warning log.
 func Warn(format string, v ...interface{}) {
 	if currentLevel <= LevelWarn {
 		warnLogger.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
-// Error 输出错误日志
+// Error outputs an error log.
 func Error(format string, v ...interface{}) {
 	if currentLevel <= LevelError {
 		errorLogger.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
-// GetLevel 获取当前日志级别
+// GetLevel returns the current log level.
 func GetLevel() LogLevel {
 	return currentLevel
 }

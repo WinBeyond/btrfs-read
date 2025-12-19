@@ -5,24 +5,24 @@ import (
 	"sort"
 )
 
-// Path B-Tree 搜索路径
+// Path represents a B-Tree search path.
 type Path struct {
 	Nodes []*Node
 	Slots []int
 }
 
-// NodeReader 节点读取接口
+// NodeReader is the node read interface.
 type NodeReader interface {
 	ReadNode(logical uint64, nodeSize uint32) (*Node, error)
 }
 
-// Searcher B-Tree 搜索器
+// Searcher is a B-Tree searcher.
 type Searcher struct {
 	reader   NodeReader
 	nodeSize uint32
 }
 
-// NewSearcher 创建搜索器
+// NewSearcher creates a searcher.
 func NewSearcher(reader NodeReader, nodeSize uint32) *Searcher {
 	return &Searcher{
 		reader:   reader,
@@ -30,7 +30,7 @@ func NewSearcher(reader NodeReader, nodeSize uint32) *Searcher {
 	}
 }
 
-// Search 搜索指定的 key
+// Search searches for the specified key.
 func (s *Searcher) Search(rootAddr uint64, targetKey *Key) (*Path, error) {
 	path := &Path{
 		Nodes: make([]*Node, 0),
@@ -40,17 +40,17 @@ func (s *Searcher) Search(rootAddr uint64, targetKey *Key) (*Path, error) {
 	currentAddr := rootAddr
 
 	for {
-		// 读取当前节点
+		// Read current node.
 		node, err := s.reader.ReadNode(currentAddr, s.nodeSize)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read node at 0x%x: %w", currentAddr, err)
 		}
 
-		// 二分查找
+		// Binary search.
 		slot, exact := s.binarySearch(node, targetKey)
 
-		// 对于内部节点，如果没有精确匹配，使用前一个 slot
-		// 参考 btrfs-fuse: if (level && ret && slot > 0) slot--;
+		// For internal nodes, if not exact match, use the previous slot.
+		// See btrfs-fuse: if (level && ret && slot > 0) slot--;
 		if !node.Header.IsLeaf() && !exact && slot > 0 {
 			slot--
 		}
@@ -58,12 +58,12 @@ func (s *Searcher) Search(rootAddr uint64, targetKey *Key) (*Path, error) {
 		path.Nodes = append(path.Nodes, node)
 		path.Slots = append(path.Slots, slot)
 
-		// 如果是叶节点，搜索完成
+		// If it's a leaf node, search is complete.
 		if node.Header.IsLeaf() {
 			return path, nil
 		}
 
-		// 内部节点，继续向下
+		// Internal node, continue downward.
 		if slot >= len(node.Ptrs) {
 			return nil, fmt.Errorf("invalid slot %d (max %d)", slot, len(node.Ptrs)-1)
 		}
@@ -71,7 +71,7 @@ func (s *Searcher) Search(rootAddr uint64, targetKey *Key) (*Path, error) {
 	}
 }
 
-// binarySearch 二分查找，返回 (slot, exact_match)
+// binarySearch performs binary search, returning (slot, exact_match).
 func (s *Searcher) binarySearch(node *Node, targetKey *Key) (int, bool) {
 	if node.Header.IsLeaf() {
 		return s.binarySearchLeaf(node, targetKey)
@@ -80,12 +80,12 @@ func (s *Searcher) binarySearch(node *Node, targetKey *Key) (int, bool) {
 }
 
 func (s *Searcher) binarySearchLeaf(node *Node, targetKey *Key) (int, bool) {
-	// 找到第一个 key >= targetKey 的位置
+	// Find the first key >= targetKey.
 	idx := sort.Search(len(node.Items), func(i int) bool {
 		return node.Items[i].Key.Compare(targetKey) >= 0
 	})
 
-	// 检查是否精确匹配
+	// Check for exact match.
 	exact := false
 	if idx < len(node.Items) && node.Items[idx].Key.Compare(targetKey) == 0 {
 		exact = true
@@ -95,12 +95,12 @@ func (s *Searcher) binarySearchLeaf(node *Node, targetKey *Key) (int, bool) {
 }
 
 func (s *Searcher) binarySearchInternal(node *Node, targetKey *Key) (int, bool) {
-	// 找到第一个 key > targetKey 的位置
+	// Find the first key > targetKey.
 	idx := sort.Search(len(node.Keys), func(i int) bool {
 		return node.Keys[i].Compare(targetKey) > 0
 	})
 
-	// 检查前一个是否精确匹配
+	// Check whether the previous key is an exact match.
 	exact := false
 	if idx > 0 && node.Keys[idx-1].Compare(targetKey) == 0 {
 		exact = true
@@ -109,7 +109,7 @@ func (s *Searcher) binarySearchInternal(node *Node, targetKey *Key) (int, bool) 
 	return idx, exact
 }
 
-// GetItem 从 path 获取 item
+// GetItem gets an item from the path.
 func (p *Path) GetItem() (*Item, error) {
 	if len(p.Nodes) == 0 {
 		return nil, fmt.Errorf("empty path")
@@ -129,7 +129,7 @@ func (p *Path) GetItem() (*Item, error) {
 	return leafNode.Items[slot], nil
 }
 
-// GetKey 从 path 获取 key（可能精确匹配或下一个）
+// GetKey gets the key from the path (exact match or next).
 func (p *Path) GetKey() (*Key, error) {
 	item, err := p.GetItem()
 	if err != nil {

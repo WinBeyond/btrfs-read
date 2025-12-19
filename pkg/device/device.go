@@ -7,25 +7,25 @@ import (
 	"github.com/WinBeyond/btrfs-read/pkg/errors"
 )
 
-// BlockDevice 块设备接口
+// BlockDevice is the block device interface.
 type BlockDevice interface {
-	// ReadAt 在指定偏移处读取数据
+	// ReadAt reads data at the specified offset.
 	ReadAt(p []byte, off int64) (n int, err error)
 
-	// Size 返回设备大小
+	// Size returns the device size.
 	Size() int64
 
-	// DeviceID 返回设备唯一标识
+	// DeviceID returns the unique device identifier.
 	DeviceID() uint64
 
-	// Close 关闭设备
+	// Close closes the device.
 	Close() error
 }
 
-// 确保实现了 io.ReaderAt 接口
+// Ensure FileDevice implements io.ReaderAt.
 var _ io.ReaderAt = (*FileDevice)(nil)
 
-// FileDevice 文件后端块设备
+// FileDevice is a file-backed block device.
 type FileDevice struct {
 	file     *os.File
 	size     int64
@@ -33,7 +33,7 @@ type FileDevice struct {
 	path     string
 }
 
-// NewFileDevice 创建文件设备
+// NewFileDevice creates a file device.
 func NewFileDevice(path string) (*FileDevice, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -54,12 +54,12 @@ func NewFileDevice(path string) (*FileDevice, error) {
 	return &FileDevice{
 		file:     file,
 		size:     stat.Size(),
-		deviceID: 0, // 将从 superblock 读取
+		deviceID: 0, // Will be read from the superblock.
 		path:     path,
 	}, nil
 }
 
-// ReadAt 实现 io.ReaderAt 接口
+// ReadAt implements io.ReaderAt.
 func (d *FileDevice) ReadAt(p []byte, off int64) (int, error) {
 	if off < 0 {
 		return 0, errors.Wrap("FileDevice.ReadAt", io.EOF)
@@ -76,31 +76,31 @@ func (d *FileDevice) ReadAt(p []byte, off int64) (int, error) {
 	return n, err
 }
 
-// Size 返回设备大小
+// Size returns the device size.
 func (d *FileDevice) Size() int64 {
 	return d.size
 }
 
-// DeviceID 返回设备 ID
+// DeviceID returns the device ID.
 func (d *FileDevice) DeviceID() uint64 {
 	return d.deviceID
 }
 
-// SetDeviceID 设置设备 ID（从 superblock 读取后设置）
+// SetDeviceID sets the device ID (after reading from the superblock).
 func (d *FileDevice) SetDeviceID(id uint64) {
 	d.deviceID = id
 }
 
-// Path 返回设备路径
+// Path returns the device path.
 func (d *FileDevice) Path() string {
 	return d.path
 }
 
-// Close 关闭设备
+// Close closes the device.
 func (d *FileDevice) Close() error {
 	if d.file != nil {
 		err := d.file.Close()
-		d.file = nil // 设置为 nil 防止重复关闭
+		d.file = nil // Set to nil to prevent double close.
 		return err
 	}
 	return nil

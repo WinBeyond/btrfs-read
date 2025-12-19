@@ -4,26 +4,26 @@ import (
 	"fmt"
 )
 
-// ChunkMapping Chunk 映射项
+// ChunkMapping represents a chunk mapping.
 type ChunkMapping struct {
 	LogicalStart  uint64
 	LogicalLength uint64
-	PhysicalStart uint64 // 简化版：只支持单个物理位置
+	PhysicalStart uint64 // Simplified: supports a single physical location.
 	DeviceID      uint64
 }
 
-// PhysicalAddr 物理地址
+// PhysicalAddr represents a physical address.
 type PhysicalAddr struct {
 	DeviceID uint64
 	Offset   uint64
 }
 
-// Contains 检查逻辑地址是否在此 chunk 范围内
+// Contains reports whether a logical address is in this chunk range.
 func (c *ChunkMapping) Contains(logical uint64) bool {
 	return logical >= c.LogicalStart && logical < c.LogicalStart+c.LogicalLength
 }
 
-// MapAddress 将逻辑地址映射到物理地址（简化版：SINGLE 类型）
+// MapAddress maps a logical address to a physical address (simplified: SINGLE type).
 func (c *ChunkMapping) MapAddress(logical uint64) (*PhysicalAddr, error) {
 	if !c.Contains(logical) {
 		return nil, fmt.Errorf("logical address 0x%x not in chunk range [0x%x, 0x%x)",
