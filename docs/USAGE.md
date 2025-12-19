@@ -1,26 +1,41 @@
-# Btrfs 读取服务使用指南
+# Btrfs-Read Usage Guide
 
-## 快速开始
+## Installation
 
-### 1. 编译项目
-
-```bash
-cd /root/workspaces/btrfs_read
-go build -o build/btrfs-read ./cmd/btrfs-read
-```
-
-### 2. 查看文件系统信息
+### Method 1: Using go install
 
 ```bash
-./build/btrfs-read info <btrfs_image>
+go install github.com/WinBeyond/btrfs-read/cmd/btrfs-read@latest
+
+# Add to PATH if needed
+export PATH=$PATH:$(go env GOPATH)/bin
 ```
 
-示例：
+### Method 2: From Source
+
 ```bash
-./build/btrfs-read info tests/testdata/test.img
+git clone https://github.com/WinBeyond/btrfs-read.git
+cd btrfs-read
+make build
+# Binary will be in: build/btrfs-read
 ```
 
-输出：
+## Commands
+
+### info - Show Filesystem Information
+
+Display Btrfs superblock information.
+
+```bash
+btrfs-read info <image>
+```
+
+**Example:**
+```bash
+btrfs-read info tests/testdata/test.img
+```
+
+**Output:**
 ```
 === Superblock Information ===
 
@@ -35,68 +50,203 @@ Node Size:       16384 bytes
 ...
 ```
 
-### 3. 读取文件内容
+### ls - List Directory Contents
+
+List files and directories in a Btrfs filesystem.
 
 ```bash
-./build/btrfs-read cat <btrfs_image> <file_path>
+btrfs-read ls [options] <image> [path]
+
+Options:
+  --json              Output in JSON format
+  -l, --log-level     Set log level: debug, info, warn, error (default: info)
 ```
 
-示例：
+**Examples:**
+
 ```bash
-./build/btrfs-read cat tests/testdata/test.img /hello.txt
+# List root directory
+btrfs-read ls tests/testdata/test.img /
+
+# List subdirectory
+btrfs-read ls tests/testdata/test.img /subdir
+
+# Multi-level path
+btrfs-read ls tests/testdata/test.img /a/b/c
+
+# JSON output
+btrfs-read ls --json tests/testdata/test.img /
+
+# With debug logging
+btrfs-read ls -l debug tests/testdata/test.img /
 ```
 
-输出：
+**Text Output:**
+```
+=== Directory Listing ===
+Path: /
+
+Type       Inode           Name
+-------------------------------------------
+file       257             hello.txt
+file       258             readme.txt
+dir        263             subdir
+```
+
+**JSON Output:**
+```json
+{
+  "path": "/",
+  "entries": [
+    {
+      "name": "hello.txt",
+      "inode": 257,
+      "type": 1,
+      "is_dir": false
+    },
+    {
+      "name": "subdir",
+      "inode": 263,
+      "type": 2,
+      "is_dir": true
+    }
+  ]
+}
+```
+
+### cat - Read File Content
+
+Read and display file contents from a Btrfs filesystem.
+
+```bash
+btrfs-read cat [options] <image> <path>
+
+Options:
+  --json              Output in JSON format
+  -l, --log-level     Set log level: debug, info, warn, error (default: info)
+```
+
+**Examples:**
+
+```bash
+# Read file
+btrfs-read cat tests/testdata/test.img /hello.txt
+
+# Read from nested directory
+btrfs-read cat tests/testdata/test.img /dir/subdir/file.txt
+
+# JSON output
+btrfs-read cat --json tests/testdata/test.img /hello.txt
+
+# Quiet mode (errors only)
+btrfs-read cat -l error tests/testdata/test.img /hello.txt
+```
+
+**Text Output:**
 ```
 === Btrfs File Reader ===
 Device: tests/testdata/test.img
 File:   /hello.txt
 
-✓ FS Tree root: 0x1d08000
-✓ Filesystem opened successfully
 ✓ File read successfully (18 bytes)
 
 === File Content ===
 Hello from Btrfs!
 ```
 
-## 创建测试镜像
+**JSON Output:**
+```json
+{
+  "path": "/hello.txt",
+  "size": 18,
+  "content": "Hello from Btrfs!\n"
+}
+```
 
-如果你想创建自己的测试镜像：
+## Log Levels
+
+Control the verbosity of output:
+
+| Level | Description |
+|-------|-------------|
+| `debug` | Detailed debugging information (B-Tree traversal, chunk lookups) |
+| `info` | Normal operation (default, clean output) |
+| `warn` | Warnings only (parsing issues, non-fatal errors) |
+| `error` | Errors only (fatal errors, data corruption) |
+
+**Examples:**
 
 ```bash
-# 创建 256MB 镜像文件
+# Debug mode - see internal operations
+btrfs-read ls -l debug tests/testdata/test.img /
+
+# Info mode - default, clean output
+btrfs-read ls tests/testdata/test.img /
+
+# Warn mode - only warnings
+btrfs-read cat -l warn tests/testdata/test.img /file.txt
+
+# Error mode - only errors
+btrfs-read cat -l error tests/testdata/test.img /file.txt
+```
+
+**Debug Output Example:**
+```
+[DEBUG] 2025/12/19 11:33:41 filesystem.go:86: FS Tree root: 0x1d30000
+=== Directory Listing ===
+Path: /
+...
+```
+
+## Output Redirection
+
+Logs go to `stderr`, program output goes to `stdout`:
+
+```bash
+# Only see output (no logs)
+btrfs-read ls tests/testdata/test.img / 2>/dev/null
+
+# Only see logs
+btrfs-read ls tests/testdata/test.img / >/dev/null
+
+# Save JSON to file, logs to console
+btrfs-read ls --json tests/testdata/test.img / >output.json
+
+# Save both separately
+btrfs-read ls tests/testdata/test.img / >output.txt 2>debug.log
+```
+
+## Creating Test Images
+
+To create your own Btrfs test image:
+
+```bash
+# Create 256MB image
 dd if=/dev/zero of=my_btrfs.img bs=1M count=256
 
-# 格式化为 Btrfs
-mkfs.btrfs -L MyBtrfs my_btrfs.img
+# Format as Btrfs
+mkfs.btrfs -L MyLabel my_btrfs.img
 
-# 挂载
+# Mount
 sudo mkdir -p /mnt/btrfs_test
 sudo mount -o loop my_btrfs.img /mnt/btrfs_test
 
-# 添加文件
+# Add files
 echo "Hello World" | sudo tee /mnt/btrfs_test/hello.txt
+sudo mkdir -p /mnt/btrfs_test/subdir
+echo "Nested" | sudo tee /mnt/btrfs_test/subdir/file.txt
 
-# 卸载
+# Unmount
 sudo umount /mnt/btrfs_test
 
-# 现在可以用我们的工具读取
-./build/btrfs-read cat my_btrfs.img /hello.txt
+# Now read with btrfs-read
+btrfs-read ls my_btrfs.img /
+btrfs-read cat my_btrfs.img /hello.txt
 ```
 
-## 限制
+## Using as a Library
 
-当前版本的限制：
-
-1. **仅支持根目录**：只能读取根目录下的文件，如 `/hello.txt`，不支持 `/subdir/file.txt`
-2. **简单 Chunk 类型**：仅支持 SINGLE 和 DUP，不支持 RAID0/1/5/6/10
-3. **无压缩支持**：不支持读取压缩文件
-4. **无校验**：不验证数据校验和
-
-## 代码示例
-
-如果你想在自己的 Go 项目中使用：
+You can use btrfs-read as a Go library:
 
 ```go
 package main
@@ -107,14 +257,24 @@ import (
 )
 
 func main() {
-    // 打开文件系统
+    // Open filesystem
     filesystem, err := fs.Open("my_btrfs.img")
     if err != nil {
         panic(err)
     }
     defer filesystem.Close()
     
-    // 读取文件
+    // List directory
+    entries, err := filesystem.ListDirectory("/")
+    if err != nil {
+        panic(err)
+    }
+    
+    for _, entry := range entries {
+        fmt.Printf("%s (inode: %d)\n", entry.Name, entry.Inode)
+    }
+    
+    // Read file
     data, err := filesystem.ReadFile("/hello.txt")
     if err != nil {
         panic(err)
@@ -124,32 +284,45 @@ func main() {
 }
 ```
 
-## 故障排查
+## Troubleshooting
 
-### 错误：no chunk mapping found
+### Error: "no chunk mapping found"
 
-这通常意味着：
-- 镜像文件损坏
-- 使用了不支持的 RAID 类型
-- Chunk tree 加载失败
+**Cause:**
+- Corrupted image file
+- Unsupported RAID type
+- Chunk tree loading failed
 
-解决方法：
-1. 检查镜像文件是否完整
-2. 使用 `mkfs.btrfs -d single -m single` 创建 SINGLE 模式的文件系统
+**Solution:**
+1. Verify image file integrity
+2. Use `mkfs.btrfs -d single -m single` for SINGLE mode
+3. Check with `btrfs-read info <image>` first
 
-### 错误：file not found
+### Error: "file not found"
 
-可能原因：
-- 文件不在根目录（当前不支持子目录）
-- 文件名大小写不匹配
-- 文件确实不存在
+**Cause:**
+- File doesn't exist
+- Path is case-sensitive
+- File is in a snapshot/subvolume (not supported)
 
-解决方法：
-1. 确保文件在根目录
-2. 检查文件名拼写
+**Solution:**
+1. Use `btrfs-read ls <image> /` to list available files
+2. Check file path spelling and case
+3. Ensure file is in the main filesystem (not a snapshot)
 
-## 更多信息
+### Empty Output
 
-- 查看 [ARCHITECTURE.md](ARCHITECTURE.md) 了解系统架构
-- 查看 [TESTING.md](TESTING.md) 了解测试方法
-- 参考源码中的注释了解具体实现
+**Cause:**
+- Default log level is `info` (no debug output)
+
+**Solution:**
+Use `-l debug` to see detailed operation logs:
+```bash
+btrfs-read ls -l debug tests/testdata/test.img /
+```
+
+## More Information
+
+- [Architecture Documentation](ARCHITECTURE.md) - System architecture
+- [Main README](../README.md) - Project overview
+- [Diagrams](../diagrams/) - Architecture diagrams

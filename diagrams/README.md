@@ -1,103 +1,103 @@
-# Btrfs-Read 架构图
+# Architecture Diagrams
 
-本目录包含 Btrfs-Read 项目的架构图和流程图,使用 Mermaid 格式编写。
+This directory contains architecture diagrams and flowcharts for the Btrfs-Read project, written in Mermaid format.
 
-## 图表列表
+## Diagrams
 
-### 1. 系统架构图
-**文件**: [architecture.md](architecture.md)
+### 1. System Architecture
+**File**: [architecture.md](architecture.md)
 
-展示了 Btrfs-Read 的五层架构设计:
-- 应用层 (Application Layer)
-- 文件系统层 (Filesystem Layer)  
-- B-Tree 层 (B-Tree Layer)
-- 逻辑块层 (Logical Block Layer)
-- 物理块层 (Physical Block Layer)
+Five-layer architecture design:
+- Application Layer
+- Filesystem Layer
+- B-Tree Layer
+- Chunk Layer (Logical Block Layer)
+- Device Layer (Physical Block Layer)
 
-### 2. 地址映射流程
-**文件**: [address-mapping.md](address-mapping.md)
+### 2. Address Mapping Flow
+**File**: [address-mapping.md](address-mapping.md)
 
-说明了逻辑地址到物理地址的映射过程,包括:
-- Chunk 查找
-- RAID 类型处理 (SINGLE/DUP/RAID0/1/5/6/10)
-- 物理地址计算
+Logical to physical address mapping process:
+- Chunk lookup in red-black tree
+- RAID type handling (SINGLE/DUP/RAID0/1/5/6/10)
+- Physical address calculation
 
-### 3. B-Tree 搜索流程
-**文件**: [btree-search.md](btree-search.md)
+### 3. B-Tree Search Flow
+**File**: [btree-search.md](btree-search.md)
 
-详细展示了 B-Tree 索引搜索算法:
-- 节点读取和解析
-- 二分查找实现
-- 内部节点和叶节点处理
-- Path 路径记录
+B-Tree index search algorithm:
+- Node reading and parsing
+- Binary search implementation
+- Internal node vs leaf node handling
+- Path tracking
 
-### 4. 文件读取流程
-**文件**: [file-read-flow.md](file-read-flow.md)
+### 4. File Read Flow
+**File**: [file-read-flow.md](file-read-flow.md)
 
-完整的文件读取时序图,包含:
-1. 路径解析 (遍历目录树)
-2. Inode 信息读取
-3. Extent 查找
-4. 数据读取和解压
-5. 校验和验证
+Complete file reading sequence diagram:
+1. Path resolution (directory tree traversal)
+2. Inode information lookup
+3. Extent lookup
+4. Data reading and decompression
+5. Checksum verification
 
-### 5. 初始化流程
-**文件**: [init-flow.md](init-flow.md)
+### 5. Initialization Flow
+**File**: [init-flow.md](init-flow.md)
 
-文件系统初始化过程:
-1. 设备扫描
-2. Superblock 读取
-3. Chunk Tree 初始化
-4. FS Tree 定位
-5. 缓存初始化
+Filesystem initialization process:
+1. Device scanning
+2. Superblock reading
+3. Chunk Tree initialization
+4. FS Tree location
+5. Cache initialization
 
-## 如何查看图表
+## Viewing Diagrams
 
-### 在 GitHub 上查看
-GitHub 原生支持 Mermaid 语法,直接点击 `.md` 文件即可查看渲染后的图表。
+### On GitHub
+GitHub natively supports Mermaid syntax. Just click on any `.md` file to view the rendered diagram.
 
-### 在本地查看
+### Locally
 
-#### 方法 1: VS Code
-1. 安装 "Markdown Preview Mermaid Support" 插件
-2. 打开 `.md` 文件
-3. 使用 `Ctrl+Shift+V` (Windows/Linux) 或 `Cmd+Shift+V` (Mac) 预览
+#### Method 1: VS Code
+1. Install "Markdown Preview Mermaid Support" extension
+2. Open `.md` file
+3. Press `Ctrl+Shift+V` (Windows/Linux) or `Cmd+Shift+V` (Mac) to preview
 
-#### 方法 2: Mermaid Live Editor
-1. 访问 https://mermaid.live/
-2. 复制图表代码
-3. 粘贴到编辑器中查看
+#### Method 2: Mermaid Live Editor
+1. Visit https://mermaid.live/
+2. Copy diagram code
+3. Paste into editor to view
 
-#### 方法 3: 使用 Mermaid CLI
+#### Method 3: Mermaid CLI
 ```bash
-# 安装 mermaid-cli
+# Install mermaid-cli
 npm install -g @mermaid-js/mermaid-cli
 
-# 生成 PNG 图片
+# Generate PNG image
 mmdc -i architecture.md -o architecture.png
 
-# 生成 SVG 图片
+# Generate SVG image
 mmdc -i architecture.md -o architecture.svg
 ```
 
-## 图表格式
+## Diagram Format
 
-所有图表均使用 Mermaid 格式编写,具有以下优点:
-- ✅ 纯文本,易于版本控制
-- ✅ GitHub 原生支持
-- ✅ 可转换为多种格式 (PNG, SVG, PDF)
-- ✅ 易于维护和更新
+All diagrams use Mermaid format with these advantages:
+- ✅ Plain text, easy version control
+- ✅ GitHub native support
+- ✅ Convertible to multiple formats (PNG, SVG, PDF)
+- ✅ Easy to maintain and update
 
-## 相关文档
+## Related Documentation
 
-- [ARCHITECTURE.md](../docs/ARCHITECTURE.md) - 详细的架构设计文档
-- [PROJECT.md](../PROJECT.md) - 项目概览
-- [README.md](../README.md) - 项目主页
+- [ARCHITECTURE.md](../docs/ARCHITECTURE.md) - Detailed architecture documentation
+- [README.md](../README.md) - Project overview
+- [USAGE.md](../docs/USAGE.md) - Usage guide
 
-## 贡献
+## Contributing
 
-如需更新图表:
-1. 编辑对应的 `.md` 文件
-2. 修改 Mermaid 代码块
-3. 在本地预览确认无误
-4. 提交 Pull Request
+To update diagrams:
+1. Edit the corresponding `.md` file
+2. Modify the Mermaid code block
+3. Preview locally to verify
+4. Submit a pull request

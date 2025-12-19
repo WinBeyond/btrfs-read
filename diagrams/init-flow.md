@@ -1,4 +1,4 @@
-# Btrfs 文件系统初始化流程
+# Btrfs Filesystem Initialization
 
 ```mermaid
 sequenceDiagram

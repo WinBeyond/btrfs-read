@@ -1,195 +1,215 @@
 # Btrfs-Read
 
-一个用 Go 语言实现的 Btrfs 文件系统读取工具，可以直接读取 Btrfs 镜像文件或设备中的文件和目录。
+A read-only Btrfs filesystem implementation in Go. Read files and directories from Btrfs images or devices without mounting.
 
-## 功能特性
+[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-- ✅ 读取 Btrfs 超级块信息
-- ✅ 列出目录内容（支持多层级目录）
-- ✅ 读取文件内容（支持任意深度路径）
-- ✅ JSON 格式输出
-- ✅ 支持 INLINE 和 REGULAR 类型的文件数据
-- ✅ 完整的 B-Tree 遍历
-- ✅ Chunk 逻辑到物理地址映射
+## Features
 
-## 快速开始
+- ✅ Read Btrfs superblock information
+- ✅ List directory contents (multi-level support)
+- ✅ Read file contents at any depth
+- ✅ JSON output format
+- ✅ Support for INLINE and REGULAR file types
+- ✅ Complete B-Tree traversal
+- ✅ Chunk logical-to-physical address mapping
+- ✅ Configurable logging levels
 
-### 安装
+## Installation
 
-#### 方法 1: 使用 go install (推荐)
+### Using go install (Recommended)
 
 ```bash
-# 直接从 GitHub 安装最新版本
 go install github.com/WinBeyond/btrfs-read/cmd/btrfs-read@latest
-
-# 验证安装
-btrfs-read --help
 ```
 
-安装后，`btrfs-read` 命令将被安装到 `$GOPATH/bin` 目录（通常是 `~/go/bin`）。
-
-确保 `$GOPATH/bin` 在你的 `PATH` 中:
+Make sure `$GOPATH/bin` is in your `PATH`:
 ```bash
 export PATH=$PATH:$(go env GOPATH)/bin
 ```
 
-#### 方法 2: 从源码构建
+### From Source
 
 ```bash
-# 克隆仓库
 git clone https://github.com/WinBeyond/btrfs-read.git
 cd btrfs-read
-
-# 使用 Makefile
 make build
-
-# 或手动构建
-go build -o build/btrfs-read ./cmd/btrfs-read
 ```
 
-### 使用
+## Quick Start
 
 ```bash
-# 显示帮助
-btrfs-read
-
-# 显示文件系统信息
+# Show filesystem information
 btrfs-read info <image>
 
-# 列出目录内容
+# List directory contents
 btrfs-read ls <image> [path]
-btrfs-read ls --json <image> /
 
-# 读取文件
+# Read file content
 btrfs-read cat <image> <path>
+
+# JSON output
+btrfs-read ls --json <image> /
 btrfs-read cat --json <image> /file.txt
 
-# 多层级目录支持
-btrfs-read ls <image> /dir1/dir2/dir3
-btrfs-read cat <image> /a/b/c/file.txt
-
-# 日志级别
+# Set log level
 btrfs-read ls -l debug <image> /
-btrfs-read cat --log-level warn <image> /file.txt
 ```
 
-### 示例
+## Usage Examples
 
 ```bash
-# 创建测试镜像（需要 root 权限）
+# Create a test image (requires root)
 sudo bash tests/create-test-image.sh
 
-# 列出根目录
+# List root directory
 btrfs-read ls tests/testdata/test.img /
 
-# 读取文件
+# Read a file
 btrfs-read cat tests/testdata/test.img /hello.txt
 
-# JSON 输出
+# Navigate multi-level directories
+btrfs-read ls tests/testdata/test.img /dir1/dir2/dir3
+btrfs-read cat tests/testdata/test.img /a/b/c/file.txt
+
+# JSON output
 btrfs-read ls --json tests/testdata/test.img /
 ```
 
-> **注意**: 如果使用方法 2 从源码构建，命令需要加上路径前缀 `./build/btrfs-read`
+## Commands
 
-## 项目结构
+### info
+Show Btrfs superblock information
+
+```bash
+btrfs-read info <image>
+```
+
+### ls
+List directory contents
+
+```bash
+btrfs-read ls [--json] [-l level] <image> [path]
+
+# Options:
+#   --json        Output in JSON format
+#   -l, --log-level   Set log level (debug, info, warn, error)
+```
+
+### cat
+Read file content
+
+```bash
+btrfs-read cat [--json] [-l level] <image> <path>
+
+# Options:
+#   --json        Output in JSON format
+#   -l, --log-level   Set log level (debug, info, warn, error)
+```
+
+## Log Levels
+
+Control verbosity with the `-l` or `--log-level` flag:
+
+- `debug` - Detailed debugging information
+- `info` - Normal operation (default)
+- `warn` - Warnings only
+- `error` - Errors only
+
+```bash
+# Debug mode
+btrfs-read ls -l debug tests/testdata/test.img /
+
+# Quiet mode
+btrfs-read cat -l error tests/testdata/test.img /file.txt
+```
+
+## Project Structure
 
 ```
 btrfs_read/
-├── build/              # 构建输出
-│   └── btrfs-read     # 可执行文件
-├── cmd/
-│   └── btrfs-read/    # CLI 工具源码
-├── pkg/               # 核心包
-│   ├── btree/        # B-Tree 实现
-│   ├── chunk/        # Chunk 管理
-│   ├── device/       # 设备操作
-│   ├── errors/       # 错误定义
-│   ├── fs/           # 文件系统层
-│   └── ondisk/       # 磁盘格式定义
-├── tests/            # 测试文件
-├── docs/             # 文档
-├── scripts/          # 脚本工具
-└── diagrams/         # 架构图
+├── cmd/btrfs-read/     # CLI application
+├── pkg/                # Core packages
+│   ├── btree/         # B-Tree implementation
+│   ├── chunk/         # Chunk management
+│   ├── device/        # Device operations
+│   ├── fs/            # Filesystem layer
+│   ├── logger/        # Logging system
+│   ├── ondisk/        # On-disk format definitions
+│   └── errors/        # Error definitions
+├── tests/             # Test files and images
+├── docs/              # Documentation
+├── scripts/           # Utility scripts
+└── diagrams/          # Architecture diagrams
 ```
 
-## 开发
+## Architecture
 
-### 运行测试
+Five-layer design:
+
+1. **Application Layer** - CLI interface
+2. **Filesystem Layer** - File and directory operations
+3. **B-Tree Layer** - Metadata indexing and search
+4. **Chunk Layer** - Logical to physical address mapping
+5. **Device Layer** - Physical I/O and caching
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
+
+## Development
+
+### Build
 
 ```bash
-# 所有测试
-make test
-
-# 单元测试
-make test-unit
-
-# 集成测试
-make test-integration
+make build          # Build binary
+make clean          # Clean build artifacts
+make fmt            # Format code
+make vet            # Run go vet
 ```
 
-### 代码检查
+### Test
 
 ```bash
-# 格式化
-make fmt
-
-# 静态检查
-make vet
+make test           # Run all tests
+make test-unit      # Unit tests only
+make test-integration  # Integration tests only
 ```
 
-### 清理
+### Scripts
 
 ```bash
-make clean
+./scripts/demo.sh              # Basic demo
+./scripts/test_multilevel.sh   # Multi-level directory test
+./scripts/final_test.sh        # Comprehensive test
+./scripts/verify_setup.sh      # Verify setup
 ```
 
-## 文档
+## Limitations
 
-详细文档位于 `docs/` 目录：
+- ❌ Read-only (no write support)
+- ❌ No compression support
+- ❌ No encryption support
+- ❌ No snapshot/subvolume switching
+- ✅ INLINE and REGULAR file types supported
+- ✅ Single-device Btrfs only
+- ✅ Multi-level directory traversal
 
-- [架构设计](docs/ARCHITECTURE.md) - 技术架构和设计文档
-- [使用说明](docs/USAGE.md) - 详细使用指南
-- [快速开始](docs/QUICKSTART.md) - 快速上手教程
-- [构建说明](docs/BUILD_AND_NAMING.md) - 构建和命名配置
+## Contributing
 
-## 测试脚本
+Contributions are welcome! Please feel free to submit issues and pull requests.
 
-测试脚本位于 `scripts/` 目录：
+## Documentation
 
-```bash
-# 基础功能演示
-./scripts/demo.sh
+- [Architecture](docs/ARCHITECTURE.md) - Technical architecture and design
+- [Usage](docs/USAGE.md) - Detailed usage guide
+- [Diagrams](diagrams/) - Architecture diagrams (Mermaid format)
 
-# 多层级目录测试
-./scripts/test_multilevel.sh
-
-# 综合测试
-./scripts/final_test.sh
-
-# 验证设置
-./scripts/verify_setup.sh
-```
-
-## 技术栈
-
-- **语言**: Go 1.21+
-- **核心技术**:
-  - Btrfs 磁盘格式解析
-  - B-Tree 数据结构
-  - CRC32C 校验
-  - Copy-on-Write (COW) 文件系统
-
-## 限制
-
-- 只读访问（不支持写入）
-- 不支持压缩文件
-- 不支持加密文件
-- 不支持快照和子卷切换
-
-## 许可证
+## License
 
 MIT License
 
-## 作者
+## References
 
-Btrfs-Read Project
+- [Btrfs Wiki](https://btrfs.wiki.kernel.org/)
+- [Btrfs On-disk Format](https://btrfs.wiki.kernel.org/index.php/On-disk_Format)
+- [btrfs-fuse](https://github.com/adam900710/btrfs-fuse) - Reference implementation

@@ -1,4 +1,4 @@
-# 逻辑地址到物理地址映射流程
+# Logical to Physical Address Mapping
 
 ```mermaid
 flowchart TD

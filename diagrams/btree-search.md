@@ -1,4 +1,4 @@
-# B-Tree 搜索流程
+# B-Tree Search Algorithm
 
 ```mermaid
 flowchart TD
