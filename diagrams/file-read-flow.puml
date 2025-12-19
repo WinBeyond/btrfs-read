@@ -1,0 +1,212 @@
+@startuml File Read Flow
+
+!theme plain
+skinparam sequenceMessageAlign center
+
+title 文件读取完整流程
+
+actor User
+participant "FileSystem" as FS
+participant "InodeReader" as IR
+participant "FileReader" as FR
+participant "BTreeSearcher" as BTS
+participant "ChunkManager" as CM
+participant "Decompressor" as DC
+participant "ChecksumVerifier" as CV
+participant "BlockDevice" as BD
+
+User -> FS: ReadFile("/home/user/file.txt")
+activate FS
+
+== 1. 路径解析 ==
+FS -> IR: LookupPath("/home/user/file.txt")
+activate IR
+
+IR -> IR: 分割路径 ["home", "user", "file.txt"]
+IR -> IR: 从根目录开始 (ino=256)
+
+loop 遍历路径每个部分
+    IR -> BTS: Search(fsTree, DIR_ITEM key)
+    note right
+        key = {
+          objectid: current_ino
+          type: DIR_ITEM
+          offset: hash("home")
+        }
+    end note
+    activate BTS
+    
+    BTS -> CM: LogicalToPhysical(nodeAddr)
+    activate CM
+    CM -> CM: FindChunk(logical)
+    CM -> CM: MapAddress(RAID0/1/...)
+    CM --> BTS: physicalAddr
+    deactivate CM
+    
+    BTS -> BD: ReadAt(physicalAddr, nodeSize)
+    activate BD
+    BD --> BTS: node_data
+    deactivate BD
+    
+    BTS -> BTS: ParseNode()
+    BTS -> BTS: BinarySearch(key)
+    BTS --> IR: DIR_ITEM (子 inode)
+    deactivate BTS
+    
+    IR -> IR: current_ino = 子 inode
+end
+
+IR --> FS: file_ino (最终文件的 inode)
+deactivate IR
+
+== 2. 读取 Inode 信息 ==
+FS -> IR: ReadInode(file_ino)
+activate IR
+
+IR -> BTS: Search(fsTree, INODE_ITEM key)
+activate BTS
+note right
+    key = {
+      objectid: file_ino
+      type: INODE_ITEM
+      offset: 0
+    }
+end note
+
+BTS -> CM: LogicalToPhysical()
+CM --> BTS: physicalAddr
+BTS -> BD: ReadAt()
+BD --> BTS: node_data
+BTS -> BTS: ParseInodeItem()
+BTS --> IR: InodeInfo (size, mode, ...)
+deactivate BTS
+
+IR --> FS: inodeInfo
+deactivate IR
+
+== 3. 查找文件 Extent ==
+FS -> FR: FindExtent(file_ino, offset=0)
+activate FR
+
+FR -> BTS: Search(fsTree, EXTENT_DATA key)
+activate BTS
+note right
+    key = {
+      objectid: file_ino
+      type: EXTENT_DATA
+      offset: 0
+    }
+end note
+
+BTS -> CM: LogicalToPhysical()
+CM --> BTS: physicalAddr
+BTS -> BD: ReadAt()
+BD --> BTS: node_data
+BTS -> BTS: ParseExtentItem()
+
+alt INLINE extent
+    BTS --> FR: inline_data (数据在 item 中)
+else REGULAR extent
+    BTS --> FR: ExtentInfo {
+    note right
+        disk_bytenr: 逻辑地址
+        disk_num_bytes: 磁盘大小
+        compression: 压缩类型
+        offset: extent 内偏移
+        num_bytes: 实际大小
+    end note
+    BTS --> FR: }
+end
+
+deactivate BTS
+
+== 4. 读取 Extent 数据 ==
+alt INLINE extent
+    FR --> FS: inline_data
+else REGULAR extent
+    FR -> CM: LogicalToPhysical(disk_bytenr)
+    activate CM
+    
+    CM -> CM: FindChunk(disk_bytenr)
+    
+    alt RAID0
+        CM -> CM: 计算条带索引和偏移
+        CM --> FR: physicalAddr
+    else RAID1
+        CM -> CM: 选择第一个镜像
+        CM --> FR: physicalAddr (mirror 0)
+    else RAID5/6
+        CM -> CM: 奇偶校验计算
+        CM --> FR: physicalAddr
+    end
+    
+    deactivate CM
+    
+    FR -> BD: ReadAt(physicalAddr, disk_num_bytes)
+    activate BD
+    BD --> FR: compressed_data
+    deactivate BD
+    
+    ' 验证校验和
+    FR -> CV: Verify(compressed_data, expected_csum)
+    activate CV
+    CV -> CV: ComputeCRC32C(data)
+    CV -> CV: Compare(computed, expected)
+    
+    alt 校验和匹配
+        CV --> FR: OK
+    else 校验和不匹配
+        CV --> FR: Error (数据损坏)
+    end
+    deactivate CV
+    
+    ' 解压缩
+    alt compression = ZLIB
+        FR -> DC: DecompressZlib(compressed_data)
+        activate DC
+        DC --> FR: decompressed_data
+        deactivate DC
+    else compression = LZO
+        FR -> DC: DecompressLZO(compressed_data)
+        activate DC
+        DC --> FR: decompressed_data
+        deactivate DC
+    else compression = ZSTD
+        FR -> DC: DecompressZstd(compressed_data)
+        activate DC
+        DC --> FR: decompressed_data
+        deactivate DC
+    else no compression
+        FR -> FR: decompressed_data = compressed_data
+    end
+    
+    FR --> FS: decompressed_data
+end
+
+deactivate FR
+
+== 5. 处理跨 Extent 读取 (如果需要) ==
+alt 文件大小 > 单个 extent
+    loop 剩余的 extents
+        FS -> FR: FindExtent(file_ino, next_offset)
+        FR --> FS: next_extent_data
+        FS -> FS: 拼接数据
+    end
+end
+
+FS --> User: file_data (完整文件内容)
+deactivate FS
+
+note over User, BD
+    读取完成！
+    完整流程包括:
+    1. 路径解析 (遍历目录树)
+    2. 读取 Inode
+    3. 查找 Extent
+    4. 地址映射 (逻辑→物理)
+    5. 读取物理数据
+    6. 校验和验证
+    7. 解压缩
+end note
+
+@enduml

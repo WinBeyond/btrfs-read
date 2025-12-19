@@ -1,0 +1,115 @@
+@startuml Address Mapping Flow
+
+!theme plain
+
+title 逻辑地址到物理地址映射流程
+
+start
+
+:接收逻辑地址;
+note right
+    输入: logical_addr (uint64)
+    例如: 0x1234000
+end note
+
+partition "Chunk Manager" {
+    :在红黑树中查找 Chunk;
+    note right
+        搜索条件:
+        chunk.start <= logical_addr
+        && logical_addr < chunk.start + chunk.length
+    end note
+    
+    if (找到 Chunk?) then (是)
+        :计算 Chunk 内偏移;
+        note right
+            offset_in_chunk = 
+            logical_addr - chunk.logical_start
+        end note
+    else (否)
+        :返回错误;
+        note right: ErrChunkNotFound
+        stop
+    endif
+}
+
+partition "RAID Handler" {
+    :根据 RAID 类型处理;
+    
+    if (RAID 类型?) then (SINGLE/DUP)
+        :直接映射;
+        note right
+            physical = 
+            chunk.stripes[0].offset 
+            + offset_in_chunk
+        end note
+        
+    elseif (RAID0) then
+        :条带化计算;
+        note right
+            stripe_nr = offset_in_chunk / stripe_len
+            stripe_idx = stripe_nr % num_stripes
+            stripe_offset = (stripe_nr / num_stripes) * stripe_len
+            offset_in_stripe = offset_in_chunk % stripe_len
+            
+            physical = 
+            chunk.stripes[stripe_idx].offset
+            + stripe_offset 
+            + offset_in_stripe
+        end note
+        
+    elseif (RAID1) then
+        :镜像选择;
+        note right
+            返回所有镜像地址:
+            for each stripe:
+                physical[i] = 
+                stripe.offset + offset_in_chunk
+            
+            通常选择第一个镜像
+        end note
+        
+    elseif (RAID10) then
+        :RAID1+0 组合;
+        note right
+            先 RAID0 条带化
+            再 RAID1 镜像
+        end note
+        
+    elseif (RAID5/6) then
+        :奇偶校验计算;
+        note right
+            计算数据条带和奇偶条带
+            处理条带旋转
+            (复杂实现)
+        end note
+        
+    else (未知)
+        :返回错误;
+        note right: ErrUnsupportedRaidType
+        stop
+    endif
+}
+
+:返回物理地址;
+note right
+    输出: PhysicalAddr {
+        device_id: uint64
+        offset: uint64
+    }
+end note
+
+stop
+
+legend right
+    | RAID 类型 | 特点 |
+    | SINGLE | 单设备，无冗余 |
+    | DUP | 同设备双份 (元数据) |
+    | RAID0 | 条带化，提高性能 |
+    | RAID1 | 镜像，提高可靠性 |
+    | RAID10 | RAID1+0 组合 |
+    | RAID5 | 单奇偶校验 |
+    | RAID6 | 双奇偶校验 |
+end legend
+
+@enduml

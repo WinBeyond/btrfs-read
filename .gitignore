@@ -1,0 +1,50 @@
+# Binaries
+build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.html
+
+# Go workspace file
+go.work
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test data (except the committed test images)
+tests/testdata/*.img
+tests/testdata/*.qcow2
+!tests/testdata/.gitkeep
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# OS files
+Thumbs.db
+
+# Documentation build artifacts
+docs/.build/
+*.pdf
+
+# Compiled Object files
+*.o
+*.a
+*.so
+
+# Dependency directories
+vendor/

@@ -1,0 +1,126 @@
+@startuml Btrfs Filesystem Initialization Flow
+
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+
+title Btrfs 文件系统初始化流程
+
+actor User
+participant "FileSystem" as FS
+participant "VolumeManager" as VM
+participant "SuperblockReader" as SR
+participant "BlockDevice" as BD
+participant "ChunkManager" as CM
+participant "BTreeSearcher" as BTS
+
+User -> FS: Open(devicePaths)
+activate FS
+
+== 1. 设备扫描 ==
+FS -> VM: ScanDevices(paths)
+activate VM
+loop 遍历每个设备路径
+    VM -> BD: NewFileDevice(path)
+    activate BD
+    BD --> VM: device
+    deactivate BD
+    VM -> VM: 存储设备 (deviceID -> device)
+end
+VM --> FS: volumeManager
+deactivate VM
+
+== 2. 读取 Superblock ==
+FS -> SR: NewSuperblockReader(device)
+activate SR
+FS -> SR: ReadLatest()
+
+SR -> BD: ReadAt(0x10000, 4096)
+note right: 读取主 Superblock (64KB)
+activate BD
+BD --> SR: data[4096]
+deactivate BD
+
+SR -> SR: Unmarshal(data)
+SR -> SR: VerifyMagic("_BHRfS_M")
+SR -> SR: VerifyChecksum(CRC32C)
+
+alt Superblock 有效
+    SR --> FS: superblock
+else 主 Superblock 损坏
+    SR -> BD: ReadAt(0x4000000, 4096)
+    note right: 尝试备份 Superblock (64MB)
+    BD --> SR: backup_data
+    SR -> SR: 验证备份
+    SR --> FS: superblock (backup)
+end
+deactivate SR
+
+== 3. 初始化 Chunk Tree ==
+FS -> CM: NewChunkManager()
+activate CM
+CM --> FS: chunkManager
+deactivate CM
+
+FS -> CM: LoadFromTree(superblock.ChunkRoot)
+activate CM
+
+CM -> BTS: Search(chunkRoot, CHUNK_ITEM key)
+activate BTS
+BTS -> BD: ReadNode(chunkRoot)
+BD --> BTS: node_data
+BTS -> BTS: ParseNode()
+BTS -> BTS: BinarySearch(CHUNK_ITEM)
+BTS --> CM: path (叶节点 + slot)
+deactivate BTS
+
+loop 遍历所有 CHUNK_ITEM
+    CM -> CM: ParseChunkItem(item.Data)
+    note right
+        解析:
+        - logical_start
+        - length  
+        - RAID type
+        - stripe info
+    end note
+    
+    CM -> CM: AddMapping(chunkMapping)
+    note right: 插入红黑树
+    
+    CM -> BTS: NextItem()
+    BTS --> CM: next_item
+end
+
+CM --> FS: 完成 Chunk Tree 加载
+deactivate CM
+
+== 4. 定位 FS Tree ==
+FS -> BTS: Search(rootTree, FS_TREE_OBJECTID)
+activate BTS
+BTS -> CM: LogicalToPhysical(rootTree)
+CM --> BTS: physicalAddr
+BTS -> BD: ReadAt(physicalAddr)
+BD --> BTS: node_data
+BTS -> BTS: ParseNode()
+BTS -> BTS: FindKey(FS_TREE_OBJECTID)
+BTS --> FS: fsTreeRoot (逻辑地址)
+deactivate BTS
+
+== 5. 初始化缓存 ==
+FS -> FS: NewBlockCache(256)
+note right: LRU 缓存，256 个块
+
+== 完成 ==
+FS --> User: fileSystem
+deactivate FS
+
+note over User, BD
+    初始化完成后，文件系统已准备好:
+    - 所有设备已加载
+    - Superblock 已解析
+    - Chunk 映射已建立
+    - FS Tree 已定位
+    - 缓存已初始化
+end note
+
+@enduml

@@ -1,0 +1,163 @@
+@startuml B-Tree Search Flow
+
+!theme plain
+
+title B-Tree 搜索流程
+
+start
+
+:接收搜索请求;
+note right
+    输入:
+    - root_addr: 根节点逻辑地址
+    - target_key: 目标 Key
+end note
+
+:初始化 Path;
+note right
+    path = {
+        nodes: []
+        slots: []
+    }
+end note
+
+:current_addr = root_addr;
+
+repeat
+    :读取当前节点;
+    note right
+        1. 逻辑地址 → 物理地址
+        2. 从设备读取数据
+        3. 验证校验和
+    end note
+    
+    :解析节点头;
+    note right
+        header = {
+            checksum: [32]byte
+            fsid: [16]byte
+            bytenr: uint64
+            level: uint8
+            nritems: uint32
+            ...
+        }
+    end note
+    
+    if (level == 0?) then (是 - 叶节点)
+        :解析 items[];
+        note right
+            每个 item:
+            - key: BtrfsKey
+            - offset: 数据偏移
+            - size: 数据大小
+            - data: 实际数据
+        end note
+        
+        :二分查找 target_key;
+        
+        partition "叶节点二分查找" {
+            :left = 0, right = nritems;
+            
+            while (left < right?)
+                :mid = (left + right) / 2;
+                :cmp = items[mid].key.Compare(target_key);
+                
+                if (cmp < 0) then
+                    :left = mid + 1;
+                else
+                    :right = mid;
+                endif
+            endwhile
+            
+            :slot = left;
+        }
+        
+        :记录到 Path;
+        note right
+            path.nodes.append(node)
+            path.slots.append(slot)
+        end note
+        
+        :返回 Path;
+        stop
+        
+    else (否 - 内部节点)
+        :解析 key_ptrs[];
+        note right
+            每个 key_ptr:
+            - key: BtrfsKey
+            - blockptr: 子节点地址
+            - generation: 生成号
+        end note
+        
+        :二分查找 target_key;
+        
+        partition "内部节点二分查找" {
+            :left = 0, right = nritems;
+            
+            while (left < right?)
+                :mid = (left + right) / 2;
+                :cmp = key_ptrs[mid].key.Compare(target_key);
+                
+                if (cmp < 0) then
+                    :left = mid + 1;
+                else
+                    :right = mid;
+                endif
+            endwhile
+            
+            :slot = left;
+            
+            if (slot > 0 && 没有精确匹配?) then
+                :slot = slot - 1;
+                note right: 使用前一个指针
+            endif
+        }
+        
+        :记录到 Path;
+        note right
+            path.nodes.append(node)
+            path.slots.append(slot)
+        end note
+        
+        :current_addr = key_ptrs[slot].blockptr;
+        note right: 递归到子节点
+    endif
+    
+repeat while (true)
+
+note right of start
+    Key 比较规则:
+    1. 比较 objectid
+    2. 如果相等，比较 type
+    3. 如果相等，比较 offset
+    
+    伪代码:
+    func (k *Key) Compare(other *Key) int {
+        if k.objectid != other.objectid {
+            return k.objectid - other.objectid
+        }
+        if k.type != other.type {
+            return k.type - other.type
+        }
+        return k.offset - other.offset
+    }
+end note
+
+legend right
+    | 节点类型 | level | 内容 |
+    | 内部节点 | > 0 | key_ptrs[] (指向子节点) |
+    | 叶节点 | = 0 | items[] (实际数据) |
+    
+    Path 结构:
+    - nodes: 从 root 到 leaf 的所有节点
+    - slots: 每个节点中的 slot 索引
+    
+    例如查找 key=(256, INODE_ITEM, 0):
+    path = {
+        nodes: [root_node, internal_node, leaf_node]
+        slots: [3, 5, 12]
+    }
+end legend
+
+@enduml
